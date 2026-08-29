@@ -16,10 +16,10 @@ for (const page of pages) {
   await page.waitForFunction(() => globalThis.__FPS_GAME__?.state, null, { timeout: 45000 });
 }
 
-await pages[0].evaluate(() => globalThis.__FPS_GAME__.onlineCreate('blue', 'm16'));
+await pages[0].evaluate(() => globalThis.__FPS_GAME__.onlineCreate('blue', 'type38'));
 await pages[0].waitForFunction(() => globalThis.__FPS_GAME__.state().roomCode.length === 6);
 const roomCode = await pages[0].evaluate(() => globalThis.__FPS_GAME__.state().roomCode);
-await pages[1].evaluate(code => globalThis.__FPS_GAME__.onlineJoin(code, 'red', 'akm'), roomCode);
+await pages[1].evaluate(code => globalThis.__FPS_GAME__.onlineJoin(code, 'red', 'zhongzheng-shi'), roomCode);
 await Promise.all(pages.map(page => page.waitForFunction(() => globalThis.__FPS_GAME__.state().roomPlayers === 2)));
 
 await pages[0].evaluate(() => globalThis.__FPS_GAME__.onlineStart('military-base'));
@@ -35,7 +35,7 @@ await pages[1].evaluate(() => globalThis.__FPS_GAME__.releaseFire());
 await pages[1].evaluate(() => globalThis.__FPS_GAME__.ads(false));
 await pages[1].waitForTimeout(350);
 const clientState = await pages[1].evaluate(() => globalThis.__FPS_GAME__.state());
-if (clientState.ammo.magazine >= 30) throw new Error(`remote client ammunition did not decrease: ${JSON.stringify(clientState.ammo)}`);
+if (clientState.ammo.magazine >= 5) throw new Error(`remote client ammunition did not decrease: ${JSON.stringify(clientState.ammo)}`);
 
 await pages[1].evaluate(() => globalThis.__FPS_GAME__.grenade());
 await pages[0].waitForFunction(() => globalThis.__FPS_GAME__.state().activeGrenades === 1, null, { timeout: 3000 });

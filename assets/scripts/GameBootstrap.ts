@@ -2,7 +2,7 @@ import {
   _decorator, AudioClip, AudioSource, Camera, Canvas, Color, Component, DirectionalLight,
   EventKeyboard, EventMouse, EventTouch, FogInfo, Game, game, Graphics, input, Input, KeyCode,
   Label, Layers, Material, Mesh, MeshRenderer, Node, primitives, Rect, resources,
-  sys, UITransform, utils, Vec2, Vec3, view,
+  Sprite, SpriteFrame, sys, UITransform, utils, Vec2, Vec3, view,
 } from 'cc';
 import { ActionState } from './core/ActionState';
 import {
@@ -35,21 +35,14 @@ const PICKUP_COUNT = 9;
 
 interface WeaponVisualSpec { receiver:number; barrel:number; stock:number; handguard:number; width:number; magazine:'straight'|'curved'|'box'|'pistol'; wood:boolean; carry:boolean; bipod:boolean; heavy:boolean; }
 const WEAPON_VISUALS:Record<WeaponId,WeaponVisualSpec>={
-  m16:{receiver:0.62,barrel:0.5,stock:0.34,handguard:0.35,width:0.16,magazine:'curved',wood:false,carry:true,bipod:false,heavy:false},
-  m4a1:{receiver:0.57,barrel:0.39,stock:0.29,handguard:0.31,width:0.16,magazine:'curved',wood:false,carry:false,bipod:false,heavy:false},
-  mp5:{receiver:0.48,barrel:0.28,stock:0.28,handguard:0.24,width:0.15,magazine:'curved',wood:false,carry:false,bipod:false,heavy:false},
-  m249:{receiver:0.76,barrel:0.64,stock:0.38,handguard:0.42,width:0.21,magazine:'box',wood:false,carry:true,bipod:true,heavy:true},
-  m107:{receiver:0.9,barrel:0.88,stock:0.42,handguard:0.58,width:0.22,magazine:'straight',wood:false,carry:true,bipod:true,heavy:true},
-  m200:{receiver:0.84,barrel:0.94,stock:0.46,handguard:0.62,width:0.2,magazine:'straight',wood:false,carry:false,bipod:true,heavy:true},
-  awm:{receiver:0.88,barrel:1.08,stock:0.52,handguard:0.64,width:0.2,magazine:'straight',wood:false,carry:false,bipod:true,heavy:true},
-  m2hb:{receiver:1.0,barrel:0.84,stock:0.28,handguard:0.34,width:0.3,magazine:'box',wood:false,carry:true,bipod:true,heavy:true},
-  akm:{receiver:0.63,barrel:0.48,stock:0.36,handguard:0.34,width:0.17,magazine:'curved',wood:true,carry:false,bipod:false,heavy:false},
-  ak74:{receiver:0.64,barrel:0.51,stock:0.36,handguard:0.35,width:0.165,magazine:'curved',wood:false,carry:false,bipod:false,heavy:false},
-  aks74u:{receiver:0.5,barrel:0.27,stock:0.25,handguard:0.22,width:0.16,magazine:'curved',wood:true,carry:false,bipod:false,heavy:false},
-  rpk:{receiver:0.7,barrel:0.66,stock:0.39,handguard:0.4,width:0.18,magazine:'curved',wood:true,carry:false,bipod:true,heavy:true},
-  pkm:{receiver:0.8,barrel:0.67,stock:0.4,handguard:0.38,width:0.22,magazine:'box',wood:true,carry:true,bipod:true,heavy:true},
-  svd:{receiver:0.75,barrel:0.72,stock:0.44,handguard:0.46,width:0.18,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
-  kord:{receiver:0.94,barrel:0.76,stock:0.31,handguard:0.36,width:0.28,magazine:'box',wood:false,carry:true,bipod:true,heavy:true},
+  mp18:{receiver:0.52,barrel:0.34,stock:0.38,handguard:0.28,width:0.16,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
+  'zhongzheng-shi':{receiver:0.7,barrel:0.96,stock:0.5,handguard:0.62,width:0.16,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
+  zb26:{receiver:0.74,barrel:0.66,stock:0.42,handguard:0.44,width:0.2,magazine:'box',wood:true,carry:true,bipod:true,heavy:true},
+  'type24-hmg':{receiver:0.96,barrel:0.82,stock:0.31,handguard:0.36,width:0.28,magazine:'box',wood:true,carry:true,bipod:true,heavy:true},
+  type38:{receiver:0.7,barrel:1.0,stock:0.5,handguard:0.64,width:0.16,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
+  type100:{receiver:0.56,barrel:0.4,stock:0.38,handguard:0.3,width:0.17,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
+  'type96-lmg':{receiver:0.76,barrel:0.68,stock:0.43,handguard:0.46,width:0.2,magazine:'curved',wood:true,carry:true,bipod:true,heavy:true},
+  'type92-hmg':{receiver:0.98,barrel:0.8,stock:0.31,handguard:0.38,width:0.29,magazine:'box',wood:true,carry:true,bipod:true,heavy:true},
   glock17:{receiver:0.3,barrel:0.18,stock:0.01,handguard:0.01,width:0.13,magazine:'pistol',wood:false,carry:false,bipod:false,heavy:false},
 };
 
@@ -225,7 +218,10 @@ class AudioBus {
     }
   }
   public play(id: string, volumeScale = 1): void {
-    const fallback:Record<string,string>={m4a1:'m16',ak74:'aks74u',rpk:'akm',m107:'akm',m200:'akm',svd:'akm',m2hb:'pkm',kord:'pkm'};
+    const fallback:Record<string,string>={
+      m4a1:'m16',ak74:'aks74u',rpk:'akm',m107:'akm',m200:'akm',svd:'akm',m2hb:'pkm',kord:'pkm',
+      mp18:'mp5',type100:'mp5','zhongzheng-shi':'akm',type38:'akm',zb26:'m249','type96-lmg':'m249','type24-hmg':'pkm','type92-hmg':'pkm',
+    };
     const clip=this.clips.get(id)||this.clips.get(fallback[id]);
     if (!clip) return;
     const source = this.sources[this.cursor++ % this.sources.length];
@@ -294,7 +290,7 @@ export class GameBootstrap extends Component {
   private lastMission: Record<Team, MissionId | null> = { blue: null, red: null };
   private readonly missionDeck:Record<Team,MissionId[]>={blue:[],red:[]};
   private builtMap: MapId | null = null;
-  private selectedPrimary: Record<Team, PrimaryWeaponId> = { blue: 'm16', red: 'akm' };
+  private selectedPrimary: Record<Team, PrimaryWeaponId> = { blue: 'type38', red: 'zhongzheng-shi' };
   private phase: MatchPhase = 'menu';
   private matchId = '';
   private matchTime = MATCH_SECONDS;
@@ -1709,9 +1705,9 @@ export class GameBootstrap extends Component {
     this.destroyLayer(this.menuLayer); this.menuLayer=this.panel('SingleSetup',new Color(8,12,14,230));
     this.makeText('单机模式', new Vec3(0, 350), 52, this.menuLayer, Color.WHITE);
     this.makeText('12 对 12 · 随机战场 · 随机任务 · 5 至 10 分钟', new Vec3(0, 292), 25, this.menuLayer, new Color(165,175,170));
-    this.makeButton(`蓝色特种部队${this.playerTeam === 'blue' ? ' · 已选择' : ''}`, new Vec3(-260, 150), new Vec2(430, 68), new Color(36, 92, 160), () => { this.playerTeam = 'blue'; this.showSingleSetup(); });
-    this.makeButton(`红色武装部队${this.playerTeam === 'red' ? ' · 已选择' : ''}`, new Vec3(260, 150), new Vec2(430, 68), new Color(158, 50, 50), () => { this.playerTeam = 'red'; this.showSingleSetup(); });
-    this.makeText(`武器库装备 · 蓝方 ${WEAPONS[this.selectedPrimary.blue].displayName}   /   红方 ${WEAPONS[this.selectedPrimary.red].displayName}`,new Vec3(0,55),22,this.menuLayer,new Color(188,199,194));
+    this.makeButton(`日军${this.playerTeam === 'blue' ? ' · 已选择' : ''}`, new Vec3(-260, 150), new Vec2(430, 68), new Color(104, 86, 52), () => { this.playerTeam = 'blue'; this.showSingleSetup(); });
+    this.makeButton(`中国军队${this.playerTeam === 'red' ? ' · 已选择' : ''}`, new Vec3(260, 150), new Vec2(430, 68), new Color(91, 101, 77), () => { this.playerTeam = 'red'; this.showSingleSetup(); });
+    this.makeText(`武器库装备 · 日军 ${WEAPONS[this.selectedPrimary.blue].displayName}   /   中国军队 ${WEAPONS[this.selectedPrimary.red].displayName}`,new Vec3(0,55),22,this.menuLayer,new Color(188,199,194));
     this.makeButton('开始随机作战', new Vec3(-225, -35), new Vec2(400, 82), new Color(54, 122, 78), () => this.startMatch());
     this.makeButton('大逃杀 · 16 人', new Vec3(225, -35), new Vec2(400, 82), new Color(105, 78, 46), () => this.startBattleRoyale());
     const nextWeapon=([...PRIMARY_WEAPONS.blue,...PRIMARY_WEAPONS.red] as PrimaryWeaponId[]).filter(id=>WEAPON_UNLOCK_LEVEL[id]>this.profileStore.profile.level).sort((a,b)=>WEAPON_UNLOCK_LEVEL[a]-WEAPON_UNLOCK_LEVEL[b])[0];
@@ -1722,7 +1718,7 @@ export class GameBootstrap extends Component {
   private showOnlineSetup(): void {
     this.destroyLayer(this.menuLayer);this.menuLayer=this.panel('OnlineSetup',new Color(8,12,14,235));
     this.makeText('联机房间',new Vec3(0,245),52,this.menuLayer,Color.WHITE);
-    this.makeButton(`阵营 · ${this.playerTeam==='blue'?'蓝队':'红队'}`,new Vec3(0,140),new Vec2(390,64),this.playerTeam==='blue'?new Color(36,92,160):new Color(158,50,50),()=>{this.playerTeam=oppositeTeam(this.playerTeam);this.showOnlineSetup();});
+    this.makeButton(`阵营 · ${this.playerTeam==='blue'?'日军':'中国军队'}`,new Vec3(0,140),new Vec2(390,64),this.playerTeam==='blue'?new Color(104,86,52):new Color(91,101,77),()=>{this.playerTeam=oppositeTeam(this.playerTeam);this.showOnlineSetup();});
     this.makeText(`武器库装备 · ${WEAPONS[this.selectedPrimary[this.playerTeam]].displayName}`,new Vec3(0,60),23,this.menuLayer,new Color(188,199,194));
     this.makeButton('创建房间',new Vec3(-210,-55),new Vec2(350,76),new Color(52,104,76),()=>void this.createOnlineRoom());
     this.makeButton('输入房间码加入',new Vec3(210,-55),new Vec2(350,76),new Color(42,79,112),()=>void this.joinOnlineRoom());
@@ -1737,7 +1733,7 @@ export class GameBootstrap extends Component {
     this.destroyLayer(this.menuLayer);this.menuLayer=this.panel('OnlineLobby',new Color(8,12,14,240));
     this.makeText(`房间 ${this.roomClient.code}`,new Vec3(0,300),48,this.menuLayer,new Color(230,235,228));
     this.makeText(`真人 ${this.roomClient.players.length} / 24 · 空位由 AI 补齐`,new Vec3(0,245),24,this.menuLayer,new Color(165,175,170));
-    this.roomClient.players.forEach((player,index)=>this.makeText(`${player.team==='blue'?'蓝':'红'} · ${player.name} · ${WEAPONS[player.weapon].displayName}${player.id===this.roomClient.hostId?' · 房主':''}`,new Vec3(index<12?-300:300,190-(index%12)*31),18,this.menuLayer,player.team==='blue'?new Color(105,165,230):new Color(230,120,110)));
+    this.roomClient.players.forEach((player,index)=>this.makeText(`${player.team==='blue'?'日':'中'} · ${player.name} · ${WEAPONS[player.weapon].displayName}${player.id===this.roomClient.hostId?' · 房主':''}`,new Vec3(index<12?-300:300,190-(index%12)*31),18,this.menuLayer,player.team==='blue'?new Color(208,176,104):new Color(159,181,133)));
     if(this.roomClient.isHost){this.makeButton('开始随机作战',new Vec3(-190,-175),new Vec2(330,62),new Color(54,122,78),()=>this.startRandomOnlineMatch());this.makeButton('大逃杀',new Vec3(190,-175),new Vec2(300,62),new Color(105,78,46),()=>{if(this.roomClient.players.length>BATTLE_ROYALE_SIZE){this.notify(`大逃杀最多允许 ${BATTLE_ROYALE_SIZE} 名真人`);return;}this.roomClient.startMatch(this.randomMap(),'battle-royale','blue');});}
     this.makeButton('退出房间',new Vec3(0,-275),new Vec2(260,58),new Color(92,55,52),()=>{this.roomClient.leave();this.showMainMenu();});
   }
@@ -1747,10 +1743,10 @@ export class GameBootstrap extends Component {
     const layer = this.panel('Armory', new Color(11, 15, 17, 235));
     this.makeText(`武器库 · 金币 ${this.profileStore.profile.coins}`,new Vec3(0,475),38,layer,Color.WHITE);
     this.makeText('点击已解锁武器即可装备并进入改枪台',new Vec3(0,432),19,layer,new Color(165,175,170));
-    this.makeText('蓝色特种部队',new Vec3(-450,382),28,layer,new Color(105,165,230));
-    this.makeText('红色武装部队',new Vec3(450,382),28,layer,new Color(230,120,110));
+    this.makeText('日军',new Vec3(-450,382),28,layer,new Color(208,176,104));
+    this.makeText('中国军队',new Vec3(450,382),28,layer,new Color(159,181,133));
     for(const [team,x] of [['blue',-450],['red',450]] as const)PRIMARY_WEAPONS[team].forEach((id,index)=>this.makeWeaponCard(layer,team,id,new Vec3(x,325-index*82)));
-    const sidearm=new Node('WeaponCard-glock17');sidearm.layer=Layers.Enum.UI_2D;layer.addChild(sidearm);sidearm.setPosition(0,-245);sidearm.addComponent(UITransform).setContentSize(720,58);const sidearmBg=sidearm.addComponent(Graphics);sidearmBg.fillColor=new Color(43,48,50,235);sidearmBg.roundRect(-360,-29,720,58,5);sidearmBg.fill();sidearmBg.strokeColor=new Color(119,130,126);sidearmBg.roundRect(-360,-29,720,58,5);sidearmBg.stroke();const sidearmPreview=new Node('WeaponPreview-glock17');sidearmPreview.layer=Layers.Enum.UI_2D;sidearm.addChild(sidearmPreview);sidearmPreview.setPosition(-185,0);sidearmPreview.addComponent(UITransform).setContentSize(210,50);this.drawWeaponPreview(sidearmPreview,'glock17',180);const sidearmLabel=this.makeText('Glock 17 · 双方固定副武器',new Vec3(120,0),20,sidearm,Color.WHITE);sidearmLabel.node.getComponent(UITransform)?.setContentSize(390,48);
+    const sidearm=new Node('WeaponCard-glock17');sidearm.layer=Layers.Enum.UI_2D;layer.addChild(sidearm);sidearm.setPosition(0,-245);sidearm.addComponent(UITransform).setContentSize(720,58);const sidearmBg=sidearm.addComponent(Graphics);sidearmBg.fillColor=new Color(43,48,50,235);sidearmBg.roundRect(-360,-29,720,58,5);sidearmBg.fill();sidearmBg.strokeColor=new Color(119,130,126);sidearmBg.roundRect(-360,-29,720,58,5);sidearmBg.stroke();const sidearmPreview=new Node('WeaponPreview-glock17');sidearmPreview.layer=Layers.Enum.UI_2D;sidearm.addChild(sidearmPreview);sidearmPreview.setPosition(-185,0);sidearmPreview.addComponent(UITransform).setContentSize(210,50);this.drawWeaponPreview(sidearmPreview,'glock17',180);const sidearmLabel=this.makeText('制式手枪 · 双方固定副武器',new Vec3(120,0),20,sidearm,Color.WHITE);sidearmLabel.node.getComponent(UITransform)?.setContentSize(390,48);
     this.makeButton('返回主菜单',new Vec3(0,-335),new Vec2(300,60),new Color(80,62,48),()=>{layer.destroy();if(this.menuLayer)this.menuLayer.active=true;this.showMainMenu();});
   }
 
@@ -1758,9 +1754,17 @@ export class GameBootstrap extends Component {
     const unlocked=this.profileStore.profile.level>=WEAPON_UNLOCK_LEVEL[weaponId],selected=this.selectedPrimary[team]===weaponId;
     const node=new Node(`WeaponCard-${weaponId}`);node.layer=Layers.Enum.UI_2D;layer.addChild(node);node.setPosition(position);node.addComponent(UITransform).setContentSize(820,70);
     const background=node.addComponent(Graphics);background.fillColor=!unlocked?new Color(33,37,39,225):selected?(team==='blue'?new Color(35,83,126,245):new Color(105,48,45,245)):new Color(48,54,56,235);background.roundRect(-410,-35,820,70,5);background.fill();background.strokeColor=selected?new Color(235,199,75):new Color(119,130,126);background.lineWidth=selected?3:1;background.roundRect(-410,-35,820,70,5);background.stroke();
-    const preview=new Node(`WeaponPreview-${weaponId}`);preview.layer=Layers.Enum.UI_2D;node.addChild(preview);preview.setPosition(-230,0);preview.addComponent(UITransform).setContentSize(300,64);this.drawWeaponPreview(preview,weaponId,275);
+    const preview=new Node(`WeaponPreview-${weaponId}`);preview.layer=Layers.Enum.UI_2D;node.addChild(preview);preview.setPosition(-230,0);preview.addComponent(UITransform).setContentSize(300,64);this.drawWeaponPreview(preview,weaponId,275);this.addWeaponIcon(preview,weaponId,new Vec2(300,64));
     const suffix=!unlocked?` · ${WEAPON_UNLOCK_LEVEL[weaponId]} 级解锁`:selected?' · 已装备':' · 点击装备';const label=this.makeText(`${WEAPONS[weaponId].displayName}${suffix}`,new Vec3(165,0),20,node,unlocked?Color.WHITE:new Color(125,132,129));label.node.getComponent(UITransform)?.setContentSize(440,52);
     node.on(Node.EventType.TOUCH_END,(event:EventTouch)=>{event.propagationStopped=true;if(!unlocked){this.notify(`${WEAPONS[weaponId].displayName} 需要 ${WEAPON_UNLOCK_LEVEL[weaponId]} 级`);return;}this.selectPrimary(team,weaponId);layer.destroy();this.showWorkbench(team,weaponId);});
+  }
+
+  private addWeaponIcon(parent:Node,weaponId:WeaponId,size:Vec2):void{
+    if(weaponId==='glock17')return;
+    const iconNode=new Node(`Icon-${weaponId}`);iconNode.layer=Layers.Enum.UI_2D;parent.addChild(iconNode);
+    iconNode.addComponent(UITransform).setContentSize(size.x,size.y);
+    const sprite=iconNode.addComponent(Sprite);sprite.sizeMode=Sprite.SizeMode.CUSTOM;
+    resources.load(`ww2/weapons/${weaponId}/icon`,SpriteFrame,(error,frame)=>{if(!error&&frame)sprite.spriteFrame=frame;});
   }
 
   private drawWeaponPreview(parent:Node,weaponId:WeaponId,width:number):void{
@@ -1772,24 +1776,24 @@ export class GameBootstrap extends Component {
       g.fillColor=body;g.roundRect(handL,-receiverH*0.43,handW,receiverH*0.86,4);g.fill();g.fillColor=spec.wood?woodHi:steelHi;g.rect(handL+4,receiverH*0.18,handW-8,2);g.fill();
       if(spec.wood){g.strokeColor=new Color(72,43,26);g.lineWidth=1.5;for(let i=0;i<4;i++){const x=handL+handW*(i+1)/5;g.moveTo(x,-receiverH*0.34);g.lineTo(x+5,receiverH*0.3);}g.stroke();}
       else{g.fillColor=recess;for(let i=0;i<6;i++)g.roundRect(handL+7+i*(Math.max(8,(handW-20)/6)),-3,Math.max(4,(handW-28)/8),6,2);g.fill();}
-      g.fillColor=body;if(['m4a1','mp5','aks74u','ak74'].includes(weaponId)){g.rect(receiverR-2,-2,stockW*0.7,4);g.fill();g.rect(receiverR-2,-receiverH*0.28,stockW*0.7,3);g.fill();g.roundRect(receiverR+stockW*0.62,-receiverH*0.48,stockW*0.34,receiverH*0.96,4);g.fill();}else{g.moveTo(receiverR-4,-receiverH*0.38);g.lineTo(receiverR+stockW,-receiverH*0.52);g.lineTo(receiverR+stockW,receiverH*0.48);g.lineTo(receiverR+stockW*0.18,receiverH*0.36);g.close();g.fill();}
+      g.fillColor=body;if(['mp18','type100'].includes(weaponId)){g.rect(receiverR-2,-2,stockW*0.7,4);g.fill();g.rect(receiverR-2,-receiverH*0.28,stockW*0.7,3);g.fill();g.roundRect(receiverR+stockW*0.62,-receiverH*0.48,stockW*0.34,receiverH*0.96,4);g.fill();}else{g.moveTo(receiverR-4,-receiverH*0.38);g.lineTo(receiverR+stockW,-receiverH*0.52);g.lineTo(receiverR+stockW,receiverH*0.48);g.lineTo(receiverR+stockW*0.18,receiverH*0.36);g.close();g.fill();}
     }
     g.fillColor=steel;g.rect(barrelL,-2,spec.barrel*scale,4);g.fill();g.fillColor=steelHi;g.rect(barrelL,-2,spec.barrel*scale,1);g.fill();g.fillColor=gunmetal;g.roundRect(barrelL-11,-5,13,10,3);g.fill();g.fillColor=recess;g.rect(barrelL-8,-3,3,2);g.rect(barrelL-3,-3,3,2);g.fill();
     g.fillColor=gunmetal;g.roundRect(receiverL+receiverW*0.17,receiverH*0.12,receiverW*0.52,receiverH*0.32,2);g.fill();g.fillColor=recess;g.roundRect(receiverL+receiverW*0.48,-receiverH*0.08,receiverW*0.32,receiverH*0.23,2);g.fill();g.fillColor=steelHi;g.circle(receiverR-10,0,2.2);g.circle(receiverR-25,0,2.2);g.fill();
     g.fillColor=body;if(spec.magazine==='box')g.roundRect(-18,-receiverH/2-24,44,27,5);else if(spec.magazine==='pistol')g.roundRect(receiverR*0.25,-receiverH/2-28,10,31,2);else{g.moveTo(-8,-receiverH/2);g.lineTo(16,-receiverH/2);g.lineTo(25,-receiverH/2-29);g.lineTo(4,-receiverH/2-27);g.close();}g.fill();g.fillColor=steelHi;g.rect(spec.magazine==='box'?-13:1,-receiverH/2-(spec.magazine==='box'?22:27),spec.magazine==='box'?34:19,2);g.fill();
     g.fillColor=body;g.moveTo(receiverR*0.18,-receiverH/2);g.lineTo(receiverR*0.48,-receiverH/2);g.lineTo(receiverR*0.58,-receiverH/2-25);g.lineTo(receiverR*0.3,-receiverH/2-27);g.close();g.fill();g.strokeColor=steelHi;g.lineWidth=2;g.moveTo(receiverR*0.06,-receiverH/2-2);g.lineTo(receiverR*0.06,-receiverH/2-14);g.lineTo(receiverR*0.22,-receiverH/2-14);g.stroke();
     if(def.category!=='pistol'&&!spec.wood){g.fillColor=steel;g.rect(receiverL+3,receiverH/2+2,receiverW-6,3);g.fill();g.fillColor=steelHi;for(let i=0;i<10;i++)g.rect(receiverL+7+i*(receiverW-18)/10,receiverH/2+4,2,3);g.fill();}
-    const akPreview=['akm','ak74','aks74u','rpk','pkm','svd','kord'].includes(weaponId),arPreview=['m16','m4a1'].includes(weaponId);
-    if(akPreview){
+    const lmgPreview=['zb26','type96-lmg'].includes(weaponId),boltPreview=['zhongzheng-shi','type38'].includes(weaponId),hmgPreview=['type24-hmg','type92-hmg'].includes(weaponId);
+    if(lmgPreview){
       g.fillColor=steel;g.rect(receiverL-2,receiverH*0.27,Math.max(20,handW*0.88),4);g.fill();
-      g.fillColor=gunmetal;const gasX=barrelL+spec.barrel*scale*0.35;g.roundRect(gasX,receiverH*0.15,12,receiverH*0.7,2);g.fill();g.rect(barrelL+spec.barrel*scale*0.14,receiverH*0.1,3,receiverH*0.85);g.fill();
-      g.fillColor=polymer;g.moveTo(-8,-receiverH/2);g.lineTo(17,-receiverH/2);g.lineTo(30,-receiverH/2-34);g.lineTo(16,-receiverH/2-40);g.lineTo(-2,-receiverH/2-28);g.close();g.fill();
-      if(weaponId==='akm'||weaponId==='rpk'||weaponId==='svd'){g.fillColor=wood;g.moveTo(receiverR-3,-receiverH*0.33);g.lineTo(receiverR+stockW,-receiverH*0.5);g.lineTo(receiverR+stockW,receiverH*0.46);g.lineTo(receiverR+stockW*0.18,receiverH*0.31);g.close();g.fill();g.strokeColor=woodHi;g.lineWidth=2;g.moveTo(receiverR+stockW*0.2,receiverH*0.15);g.lineTo(receiverR+stockW*0.88,receiverH*0.28);g.stroke();}
+      g.fillColor=gunmetal;const gasX=barrelL+spec.barrel*scale*0.35;g.roundRect(gasX,receiverH*0.15,12,receiverH*0.7,2);g.fill();
+      g.fillColor=wood;g.moveTo(receiverR-3,-receiverH*0.33);g.lineTo(receiverR+stockW,-receiverH*0.5);g.lineTo(receiverR+stockW,receiverH*0.46);g.lineTo(receiverR+stockW*0.18,receiverH*0.31);g.close();g.fill();
     }
-    if(arPreview){
-      g.fillColor=gunmetal;g.moveTo(receiverL+receiverW*0.12,receiverH/2+3);g.lineTo(receiverL+receiverW*0.28,receiverH/2+16);g.lineTo(receiverR-receiverW*0.18,receiverH/2+16);g.lineTo(receiverR-receiverW*0.07,receiverH/2+3);g.close();g.fill();
-      g.fillColor=recess;g.roundRect(receiverL+receiverW*0.31,receiverH/2+7,receiverW*0.42,5,2);g.fill();
-      const sightX=barrelL+spec.barrel*scale*0.2;g.strokeColor=gunmetal;g.lineWidth=3;g.moveTo(sightX-5,1);g.lineTo(sightX,receiverH/2+14);g.lineTo(sightX+5,1);g.stroke();
+    if(boltPreview){
+      g.fillColor=gunmetal;g.rect(receiverR-3,receiverH*0.15,4,receiverH*0.75);g.fill();g.strokeColor=woodHi;g.lineWidth=2;g.moveTo(receiverR+stockW*0.2,receiverH*0.15);g.lineTo(receiverR+stockW*0.88,receiverH*0.28);g.stroke();
+    }
+    if(hmgPreview){
+      g.strokeColor=steelHi;g.lineWidth=3;const bx=barrelL+spec.barrel*scale*0.42;g.moveTo(bx,0);g.lineTo(bx-14,-28);g.moveTo(bx+8,0);g.lineTo(bx+22,-28);g.stroke();
     }
     const optic=opticForWeapon(weaponId,this.profileStore.profile.loadouts[weaponId].optic);if(optic!=='none'){const long=optic==='4x'||optic==='6x',oy=receiverH/2+11;g.fillColor=gunmetal;if(long){g.roundRect(-30,oy-5,60,10,5);g.fill();g.circle(-30,oy,8);g.circle(30,oy,7);g.fill();g.fillColor=steelHi;g.rect(-8,oy+5,3,5);g.rect(5,oy+5,3,5);g.fill();}else{g.roundRect(-15,oy-7,30,14,5);g.fill();g.strokeColor=new Color(52,112,130);g.lineWidth=2;g.circle(-12,oy,5);g.stroke();}}
     else if(def.category!=='pistol'){g.fillColor=gunmetal;g.rect(receiverR-18,receiverH/2+2,3,9);g.rect(barrelL+spec.barrel*scale*0.18,2,3,12);g.fill();}
@@ -1803,8 +1807,8 @@ export class GameBootstrap extends Component {
 
   private showWorkbench(team:Team,selectedWeapon:PrimaryWeaponId):void{
     const layer=this.panel('Armory',new Color(11,15,17,242)),builtInOptic=BUILT_IN_OPTICS[selectedWeapon];
-    this.makeText(`改枪台 · ${team==='blue'?'蓝方':'红方'} ${WEAPONS[selectedWeapon].displayName} · 金币 ${this.profileStore.profile.coins}`,new Vec3(0,410),34,layer,Color.WHITE);
-    const preview=new Node(`WorkbenchPreview-${selectedWeapon}`);preview.layer=Layers.Enum.UI_2D;layer.addChild(preview);preview.setPosition(0,300);preview.addComponent(UITransform).setContentSize(620,110);this.drawWeaponPreview(preview,selectedWeapon,560);
+    this.makeText(`改枪台 · ${team==='blue'?'日军':'中国军队'} ${WEAPONS[selectedWeapon].displayName} · 金币 ${this.profileStore.profile.coins}`,new Vec3(0,410),34,layer,Color.WHITE);
+    const preview=new Node(`WorkbenchPreview-${selectedWeapon}`);preview.layer=Layers.Enum.UI_2D;layer.addChild(preview);preview.setPosition(0,300);preview.addComponent(UITransform).setContentSize(620,110);this.drawWeaponPreview(preview,selectedWeapon,560);this.addWeaponIcon(preview,selectedWeapon,new Vec2(620,110));
     this.makeText(builtInOptic?`自带${builtInOptic==='4x'?'四':'六'}倍镜，无需购买`:'点击配件购买，已拥有的配件再次点击可装备或卸下',new Vec3(0,225),19,layer,builtInOptic?new Color(235,199,75):new Color(165,175,170));
     const ids: AttachmentId[] = ['red-dot','2x','4x','6x','grip','collapsible-stock','folding-stock','barrel','heavy-barrel','precision-barrel'];
     const names: Record<AttachmentId,string> = {'red-dot':'红点镜','2x':'二倍镜','4x':'四倍镜','6x':'六倍镜',grip:'握把','collapsible-stock':'伸缩枪托','folding-stock':'折叠枪托',barrel:'强化枪管','heavy-barrel':'重型枪管','precision-barrel':'加长精密枪管'};
@@ -1984,7 +1988,7 @@ export class GameBootstrap extends Component {
       if (!point || chosen.some(other => Vec3.distance(other, point) < 10) || this.actors.some(actor => Vec3.distance(actor.node.worldPosition, point) < 9)) continue;
       chosen.push(point.clone());
     }
-    const weaponIds = this.selectedMission==='battle-royale' ? ['awm','m200','kord','m4a1'] as WeaponId[] : (Object.keys(WEAPONS).filter(id=>id!=='awm') as WeaponId[]);
+    const weaponIds = this.selectedMission==='battle-royale' ? ['type38','zhongzheng-shi','type96-lmg','type92-hmg'] as WeaponId[] : (Object.keys(WEAPONS).filter(id=>id!=='glock17') as WeaponId[]);
     const pickupKinds: PickupKind[] = ['weapon','weapon','weapon','weapon','weapon','grenade','grenade','medkit','medkit'];
     let battleRoyaleWeaponIndex=0;
     for (let i = pickupKinds.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [pickupKinds[i], pickupKinds[j]] = [pickupKinds[j], pickupKinds[i]]; }
@@ -2050,11 +2054,11 @@ export class GameBootstrap extends Component {
 
   private fireVehicleGun(vehicle:VehicleRuntime,shooter:Actor):boolean{
     if(!vehicle.active||vehicle.occupant!==shooter||vehicle.gun.magazine<=0){if(vehicle.gun.magazine<=0&&this.notification!=='车载机枪弹药耗尽')this.notify('车载机枪弹药耗尽');return false;}
-    if(!consumeShot(vehicle.gun,WEAPONS.m2hb,this.matchClock))return false;
+    if(!consumeShot(vehicle.gun,WEAPONS['type92-hmg'],this.matchClock))return false;
     const direction=this.direction(shooter.yaw,shooter.pitch),origin=shooter.player?this.cameraNode.worldPosition.clone():new Vec3(vehicle.node.worldPosition.x,vehicle.node.worldPosition.y+1.55,vehicle.node.worldPosition.z),obstacleDistance=this.rayObstacleDistance(origin,direction,180);let target:Actor|null=null,bestDistance=obstacleDistance;
     for(const actor of this.actors){if(!actor.alive||!this.areOpponents(shooter,actor))continue;const center=new Vec3(actor.node.worldPosition.x,actor.node.worldPosition.y+1.15,actor.node.worldPosition.z),distance=this.raySphere(origin,direction,center,0.75);if(distance!==null&&distance<bestDistance){target=actor;bestDistance=distance;}}
-    if(target)this.damageActor(target,damageAtDistance(WEAPONS.m2hb,bestDistance,false),shooter,`vehicle-gun-${this.shotSequence++}`);
-    this.spawnMuzzle(shooter);this.audio.play('m249');if(shooter.player)this.weaponKickVelocity+=0.45;if(this.gameMode==='online'&&shooter.player&&!this.roomClient.isHost)this.roomClient.sendFire(shooter.weaponId);return true;
+    if(target)this.damageActor(target,damageAtDistance(WEAPONS['type92-hmg'],bestDistance,false),shooter,`vehicle-gun-${this.shotSequence++}`);
+    this.spawnMuzzle(shooter);this.audio.play('type92-hmg');if(shooter.player)this.weaponKickVelocity+=0.45;if(this.gameMode==='online'&&shooter.player&&!this.roomClient.isHost)this.roomClient.sendFire(shooter.weaponId);return true;
   }
 
   private destroyVehicle(vehicle:VehicleRuntime): void {
@@ -2098,7 +2102,7 @@ export class GameBootstrap extends Component {
     this.notify(`拾取 ${WEAPONS[weaponId].displayName} · 按 3 切换 · 备弹 ${reserve}`);
   }
 
-  private pickupReserveFor(id:WeaponId):number{return ['m107','m200','awm','m2hb','svd','kord'].includes(id)?WEAPONS[id].reserveAmmo:PICKED_WEAPON_RESERVE;}
+  private pickupReserveFor(id:WeaponId):number{return ['type24-hmg','type92-hmg'].includes(id)?WEAPONS[id].reserveAmmo:PICKED_WEAPON_RESERVE;}
 
   private pickAiWeapon(team: Team, index: number): PrimaryWeaponId {
     const pool=PRIMARY_WEAPONS[team];
@@ -2896,7 +2900,7 @@ export class GameBootstrap extends Component {
     stock.active=def.category!=='pistol';stock.setPosition(0,-0.03,stockCenter);stock.setScale(spec.width*0.88,spec.heavy?0.19:0.15,spec.stock);stock.getComponent(MeshRenderer)?.setSharedMaterial(spec.wood?wood:polymer,0);
     stockPad.active=def.category!=='pistol';stockPad.setPosition(0,-0.03,stockCenter+spec.stock/2);stockPad.setScale(spec.width*0.96,spec.heavy?0.21:0.17,0.055);stockPad.getComponent(MeshRenderer)?.setSharedMaterial(polymer,0);
     const muzzle=part('MuzzleBrake')!;muzzle.setPosition(0,0.02,barrelCenter-spec.barrel/2-0.06);muzzle.setScale(spec.heavy?0.12:0.075,spec.heavy?0.12:0.075,spec.heavy?0.2:0.12);muzzle.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
-    const pistolGrip=part('PistolGrip')!;pistolGrip.active=true;pistolGrip.setPosition(0,-0.16,spec.receiver*0.3);pistolGrip.setScale(def.category==='pistol'?0.1:0.105,def.category==='pistol'?0.3:0.24,0.13);pistolGrip.getComponent(MeshRenderer)?.setSharedMaterial(spec.wood&&id!=='svd'?wood:polymer,0);
+    const pistolGrip=part('PistolGrip')!;pistolGrip.active=true;pistolGrip.setPosition(0,-0.16,spec.receiver*0.3);pistolGrip.setScale(def.category==='pistol'?0.1:0.105,def.category==='pistol'?0.3:0.24,0.13);pistolGrip.getComponent(MeshRenderer)?.setSharedMaterial(spec.wood?wood:polymer,0);
     magazine.active=spec.magazine!=='box';magazineLower.active=spec.magazine==='curved'||spec.magazine==='straight';boxMagazine.active=spec.magazine==='box';
     magazine.setPosition(0,-0.14,def.category==='pistol'?0.08:0.02);magazine.setScale(spec.magazine==='pistol'?0.075:spec.magazine==='straight'?0.11:0.12,spec.magazine==='pistol'?0.25:0.23,spec.magazine==='pistol'?0.1:0.16);magazine.setRotationFromEuler(0,0,0);magazine.getComponent(MeshRenderer)?.setSharedMaterial(spec.wood?wood:polymer,0);
     magazineLower.setPosition(0,-0.29,spec.magazine==='curved'?0.075:0.02);magazineLower.setScale(0.105,spec.magazine==='curved'?0.18:0.12,0.14);magazineLower.setRotationFromEuler(spec.magazine==='curved'?-14:0,0,0);magazineLower.getComponent(MeshRenderer)?.setSharedMaterial(spec.wood?wood:polymer,0);
@@ -2921,10 +2925,10 @@ export class GameBootstrap extends Component {
     if(loadout.stock==='collapsible-stock'){stock.setScale(stock.scale.x*0.86,stock.scale.y*0.85,stock.scale.z*0.72);stockPad.setPosition(0,-0.03,stockCenter+spec.stock*0.35);}else if(loadout.stock==='folding-stock'){stock.setScale(stock.scale.x*0.55,stock.scale.y*0.65,stock.scale.z*0.38);stockPad.active=false;}
     if(loadout.barrel==='heavy-barrel')barrel.setScale(barrel.scale.x*1.2,barrel.scale.y*1.2,barrel.scale.z*1.06);else if(loadout.barrel==='precision-barrel')barrel.setScale(barrel.scale.x*0.92,barrel.scale.y*0.92,barrel.scale.z*1.16);
     const hand=part('LeftHand')!;hand.setPosition(-0.09,-0.12,handguardCenter);part('RightHand')!.setPosition(0.11,-0.14,spec.receiver*0.3);
-    const detailed=showParts,arFamily=['m16','m4a1','m249','m107','m2hb'].includes(id),akFamily=['akm','ak74','aks74u','rpk','pkm','svd','kord'].includes(id),beltFed=spec.magazine==='box',sniper=def.category==='sniper',hmg=def.category==='hmg';
+    const detailed=showParts,boltFamily=['zhongzheng-shi','type38'].includes(id),compactFamily=['mp18','type100'].includes(id),lmgFamily=['zb26','type96-lmg'].includes(id),hmgFamily=['type24-hmg','type92-hmg'].includes(id),beltFed=spec.magazine==='box',sniper=def.category==='sniper',hmg=def.category==='hmg';
     barrel.active=false;gas.active=false;muzzle.active=false;
     const barrelTube=part('BarrelTube')!,gasTubeRound=part('GasTubeRound')!,muzzleTube=part('MuzzleTube')!;barrelTube.active=true;barrelTube.setPosition(0,0.02,barrelCenter);barrelTube.setScale(spec.heavy?0.085:0.055,spec.barrel,spec.heavy?0.085:0.055);barrelTube.getComponent(MeshRenderer)?.setSharedMaterial(gunmetal,0);gasTubeRound.active=def.category!=='pistol';gasTubeRound.setPosition(0,0.075,handguardCenter);gasTubeRound.setScale(spec.heavy?0.075:0.055,spec.handguard*0.9,spec.heavy?0.075:0.055);muzzleTube.active=true;muzzleTube.setPosition(0,0.02,barrelCenter-spec.barrel/2-0.06);muzzleTube.setScale(spec.heavy?0.12:0.075,spec.heavy?0.2:0.12,spec.heavy?0.12:0.075);
-    const delta=part('DeltaRing')!;delta.active=detailed&&arFamily&&def.category!=='hmg';delta.setPosition(0,0.01,handguardCenter+spec.handguard/2-0.035);delta.setScale(spec.width*1.02,0.075,spec.width*1.02);
+    const delta=part('DeltaRing')!;delta.active=false;delta.setPosition(0,0.01,handguardCenter+spec.handguard/2-0.035);delta.setScale(spec.width*1.02,0.075,spec.width*1.02);
     for(const name of ['Selector','MagRelease','ReceiverPinFront','ReceiverPinRear','BoltCatch','Trigger'])part(name)!.active=detailed;
     part('ForwardAssist')!.active=detailed&&arFamily;part('ForwardAssist')!.setPosition(spec.width*0.62,0.065,spec.receiver*0.22);part('Selector')!.setPosition(spec.width*0.62,-0.01,spec.receiver*0.25);part('MagRelease')!.setPosition(spec.width*0.62,-0.04,0);part('ReceiverPinFront')!.setPosition(spec.width*0.62,-0.015,-spec.receiver*0.3);part('ReceiverPinRear')!.setPosition(spec.width*0.62,-0.015,spec.receiver*0.3);part('BoltCatch')!.setPosition(spec.width*0.58,0.015,-spec.receiver*0.16);part('Trigger')!.setPosition(0,-0.145,spec.receiver*0.18);part('Trigger')!.setRotationFromEuler(-18,0,0);
     const heat=part('HeatShieldTop')!;heat.active=detailed&&(beltFed||hmg);heat.setPosition(0,spec.heavy?0.16:0.115,handguardCenter);heat.setScale(spec.width*0.9,0.028,spec.handguard*0.88);
@@ -2935,30 +2939,25 @@ export class GameBootstrap extends Component {
     const slingFront=part('SlingLoopFront')!,slingRear=part('SlingLoopRear')!;slingFront.active=detailed&&def.category!=='pistol';slingRear.active=detailed&&def.category!=='pistol';slingFront.setPosition(-spec.width*0.55,-0.08,handguardCenter-spec.handguard*0.3);slingRear.setPosition(-spec.width*0.55,-0.08,stockCenter);
     for(const side of [-1,1]){const port=part(`MuzzlePort${side<0?'L':'R'}`)!;port.active=detailed;port.setPosition(side*(spec.heavy?0.065:0.041),0.02,barrelCenter-spec.barrel/2-0.065);}
     const feed=part('FeedCover')!;feed.active=detailed&&beltFed;feed.setPosition(0,spec.heavy?0.15:0.125,-0.02);feed.setScale(spec.width*1.2,0.07,spec.receiver*0.55);for(let i=0;i<6;i++){const link=part(`AmmoLink${i}`)!;link.active=detailed&&beltFed;link.setPosition(-spec.width*0.72-i*0.035,-0.055,-0.01+i*0.012);}
-    const boltHandle=part('BoltHandle')!;boltHandle.active=detailed&&(sniper||akFamily);boltHandle.setPosition(spec.width*0.72,0.04,spec.receiver*0.24);boltHandle.setScale(0.035,0.16,0.035);
+    const boltHandle=part('BoltHandle')!;boltHandle.active=detailed&&(sniper||boltFamily);boltHandle.setPosition(spec.width*0.72,0.04,spec.receiver*0.24);boltHandle.setScale(0.035,0.16,0.035);
     for(const name of ['SpadeGripL','SpadeGripR']){const spade=part(name)!;spade.active=detailed&&hmg;spade.setPosition(name.endsWith('L')?-spec.width*0.56:spec.width*0.56,-0.12,stockCenter);spade.setScale(0.08,0.24,0.12);}
     for(const name of ['FrontSightGuardL','FrontSightGuardR']){const guard=part(name)!;guard.active=detailed&&!hasOptic&&def.category!=='pistol';guard.setPosition(name.endsWith('L')?-0.045:0.045,0.14,barrelCenter-spec.barrel*0.32);}
     const customParts=['AKMagazineCurve','AKGasBlock','AKFrontSightBlock','AKStockAngle','M16CarryHandleDetail','M16TriangleHandguard','M16FrontPost','MP5CockingTube','MP5RetractStock','MP5MagazineCurve','RPKBipodMount','PKMFeedTray','SniperBoltBody','SniperCheekPiece','HMGReceiverTop'];
     for(const name of customParts)part(name)!.active=false;
     const customWood=this.material('weaponWood',new Color(104,62,34),0.03,0.62);
-    if(detailed&&akFamily){
-      const curve=part('AKMagazineCurve')!;curve.active=true;curve.setPosition(0,-0.2,0.045);curve.setScale(spec.width*0.95,0.34,0.18);curve.setRotationFromEuler(-14,0,0);curve.getComponent(MeshRenderer)?.setSharedMaterial(polymer,0);
+    if(detailed&&lmgFamily){
+      const curve=part('AKMagazineCurve')!;curve.active=spec.magazine==='curved';curve.setPosition(0,-0.2,0.045);curve.setScale(spec.width*0.95,0.34,0.18);curve.setRotationFromEuler(-14,0,0);curve.getComponent(MeshRenderer)?.setSharedMaterial(polymer,0);
       const gasBlock=part('AKGasBlock')!;gasBlock.active=true;gasBlock.setPosition(0,0.08,barrelCenter+spec.barrel*0.32);gasBlock.setScale(spec.width*0.8,0.12,0.12);gasBlock.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
       const frontBlock=part('AKFrontSightBlock')!;frontBlock.active=true;frontBlock.setPosition(0,0.14,barrelCenter-spec.barrel*0.34);frontBlock.setScale(spec.width*0.8,0.17,0.1);frontBlock.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
-      const angle=part('AKStockAngle')!;angle.active=id!=='aks74u';angle.setPosition(0,-0.04,stockCenter);angle.setScale(spec.width*0.88,0.16,spec.stock*0.92);angle.setRotationFromEuler(0,0,6);angle.getComponent(MeshRenderer)?.setSharedMaterial(spec.wood?customWood:polymer,0);
+      const angle=part('AKStockAngle')!;angle.active=false;
     }
-    if(detailed&&arFamily&&id!=='m249'&&id!=='m2hb'){
-      const carryDetail=part('M16CarryHandleDetail')!;carryDetail.active=id==='m16';carryDetail.setPosition(0,0.2,0.01);carryDetail.setScale(spec.width*0.72,0.12,spec.receiver*0.58);carryDetail.getComponent(MeshRenderer)?.setSharedMaterial(polymer,0);
-      const triangle=part('M16TriangleHandguard')!;triangle.active=id==='m16';triangle.setPosition(0,-0.005,handguardCenter);triangle.setScale(spec.width*1.18,0.145,spec.handguard*1.04);triangle.getComponent(MeshRenderer)?.setSharedMaterial(polymer,0);
-      const post=part('M16FrontPost')!;post.active=id==='m16'&&!hasOptic;post.setPosition(0,0.16,barrelCenter-spec.barrel*0.34);post.setScale(0.045,0.16,0.045);post.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
-    }
-    if(detailed&&id==='mp5'){
+    if(detailed&&compactFamily){
       const tube=part('MP5CockingTube')!;tube.active=true;tube.setPosition(-spec.width*0.52,0.08,handguardCenter);tube.setScale(0.045,0.045,spec.handguard*1.22);tube.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
       const retract=part('MP5RetractStock')!;retract.active=true;retract.setPosition(0,-0.02,stockCenter);retract.setScale(0.04,0.04,spec.stock*1.12);retract.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
-      const mp5Mag=part('MP5MagazineCurve')!;mp5Mag.active=true;mp5Mag.setPosition(0,-0.2,0.05);mp5Mag.setScale(0.11,0.3,0.15);mp5Mag.setRotationFromEuler(-12,0,0);mp5Mag.getComponent(MeshRenderer)?.setSharedMaterial(polymer,0);
+      const mp5Mag=part('MP5MagazineCurve')!;mp5Mag.active=false;
     }
-    if(detailed&&id==='rpk'){const bipod=part('RPKBipodMount')!;bipod.active=true;bipod.setPosition(0,-0.12,handguardCenter);bipod.setScale(spec.width*1.1,0.08,0.1);bipod.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);}
-    if(detailed&&id==='pkm'){const feedTray=part('PKMFeedTray')!;feedTray.active=true;feedTray.setPosition(0,0.16,-0.03);feedTray.setScale(spec.width*1.25,0.08,spec.receiver*0.6);feedTray.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);}
+    if(detailed&&lmgFamily){const bipod=part('RPKBipodMount')!;bipod.active=true;bipod.setPosition(0,-0.12,handguardCenter);bipod.setScale(spec.width*1.1,0.08,0.1);bipod.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);}
+    if(detailed&&hmgFamily){const feedTray=part('PKMFeedTray')!;feedTray.active=true;feedTray.setPosition(0,0.16,-0.03);feedTray.setScale(spec.width*1.25,0.08,spec.receiver*0.6);feedTray.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);}
     if(detailed&&sniper){const boltBody=part('SniperBoltBody')!;boltBody.active=true;boltBody.setPosition(spec.width*0.7,0.04,spec.receiver*0.24);boltBody.setScale(0.04,0.04,spec.receiver*0.46);boltBody.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);const cheekPiece=part('SniperCheekPiece')!;cheekPiece.active=true;cheekPiece.setPosition(0,0.065,stockCenter);cheekPiece.setScale(spec.width*0.86,0.09,spec.stock*0.72);cheekPiece.getComponent(MeshRenderer)?.setSharedMaterial(spec.wood?customWood:polymer,0);}
     if(detailed&&hmg){const top=part('HMGReceiverTop')!;top.active=true;top.setPosition(0,0.17,-0.01);top.setScale(spec.width*1.15,0.1,spec.receiver*0.58);top.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);}
     this.opticView.active=false;for(const name of ['ScopeTube','ScopeBell','ScopeEyepiece'])part(name)!.active=false;lens.active=false;
@@ -2988,7 +2987,7 @@ export class GameBootstrap extends Component {
   private beginReload(actor:Actor|null=this.player):void{const p=actor;if(!p||!p.alive||p.vehicle)return;const definition=WEAPONS[p.weaponId];if(p.weapon.magazine>=definition.magazineSize)return;if(p.weapon.reserve<=0){if(p.player)this.notify('弹药耗尽');return;}const duration=this.reloadDuration(p,definition);if(p.player)this.setAds(false);const token=p.action.begin('reload');if(token===null)return;const runtime=p.weapon;runtime.reloading=true;if(p.player){this.reloadAnimationTime=0;this.reloadAnimationDuration=duration;this.audio.play('reload');if(this.gameMode==='online'&&!this.roomClient.isHost)this.roomClient.sendReload(p.weaponId);}this.scheduleOnce(()=>{if(p.action.complete(token)&&p.alive&&p.weapon===runtime){finishReload(runtime,definition);if(p.player){this.reloadAnimationTime=0;this.reloadAnimationDuration=0;this.resetReloadVisuals();this.notify('换弹完成');}}else runtime.reloading=false;},duration);}
 
   private selectNetworkWeapon(actor:Actor,weaponId:WeaponId):boolean{
-    const airDropWeapon=this.selectedMission==='battle-royale'&&weaponId!==actor.primaryWeaponId&&['awm','m200','kord','m4a1'].includes(weaponId);
+    const airDropWeapon=this.selectedMission==='battle-royale'&&weaponId!==actor.primaryWeaponId&&['type38','zhongzheng-shi','type96-lmg','type92-hmg'].includes(weaponId);
     if(airDropWeapon&&weaponId!==actor.supplyWeaponId){actor.supplyWeaponId=weaponId;actor.supplyWeapon=createWeaponRuntime(weaponId);actor.supplyWeapon.reserve=this.pickupReserveFor(weaponId);}
     else if(!airDropWeapon&&weaponId!==actor.primaryWeaponId&&weaponId!=='glock17'&&weaponId!==actor.pickedWeaponId){
       // A remote player can only use a third-slot weapon after the host has
@@ -3008,7 +3007,7 @@ export class GameBootstrap extends Component {
   private switchWeapon(slot: 1 | 2 | 3 | 4): void { const p=this.player;if(!p?.alive||p.vehicle||p.activeSlot===slot||(slot===3&&!p.pickedWeapon)||(slot===4&&!p.supplyWeapon))return;this.setAds(false);this.resetRecoil();this.setActorSlot(p,slot);this.fireHeld=false;this.updateWeaponAppearance();this.notify(`切换 ${WEAPONS[p.weaponId].displayName}`);}
 
   private updateHud():void{
-    const p=this.player,min=Math.floor(this.matchTime/60),sec=Math.floor(this.matchTime%60),mission=MISSION_DEFINITIONS[this.selectedMission],aliveCount=this.actors.filter(actor=>actor.alive).length,vehicle=p?.vehicle,slotText=`[1 主武器] [2 手枪] [3 地面武器] [4 空投武器]${p?` · 当前 ${p.activeSlot}`:''}`;this.hudLabels.get('score')!.string=this.selectedMission==='battle-royale'?`存活 ${aliveCount} / ${BATTLE_ROYALE_SIZE}  ·  击杀 ${p?.kills||0}`:`蓝队 ${this.score.blue}  —  ${this.score.red} 红队`;this.hudLabels.get('time')!.string=this.phase==='countdown'?'任务准备':`${min}:${sec.toString().padStart(2,'0')} · ${this.weather==='day'?'白昼':'夜战'}`;this.hudLabels.get('health')!.string=p?`生命 ${Math.ceil(p.health)} / ${p.maxHealth}${vehicle?` · 载具 ${Math.ceil(vehicle.health)}/520`:p.isCommander?' · 队长':''}`:'生命 0';this.hudLabels.get('ammo')!.string=vehicle?`${vehicle.gun.magazine} / 0 · 车载机枪`:p?`${p.weapon.magazine} / ${p.weapon.reserve}${p.weapon.reloading?' · 换弹中':''}`:'';this.hudLabels.get('items')!.string=p?`手雷 ${p.grenades}   ·   医疗包 ${p.medkits}`:'';this.hudLabels.get('slots')!.string=slotText;this.hudLabels.get('weapon')!.string=vehicle?'车载 M2HB · V 离开':p?`${WEAPONS[p.weaponId].displayName}  ·  武器槽 ${p.activeSlot}`:'';
+    const p=this.player,min=Math.floor(this.matchTime/60),sec=Math.floor(this.matchTime%60),mission=MISSION_DEFINITIONS[this.selectedMission],aliveCount=this.actors.filter(actor=>actor.alive).length,vehicle=p?.vehicle,slotText=`[1 主武器] [2 手枪] [3 地面武器] [4 空投武器]${p?` · 当前 ${p.activeSlot}`:''}`;this.hudLabels.get('score')!.string=this.selectedMission==='battle-royale'?`存活 ${aliveCount} / ${BATTLE_ROYALE_SIZE}  ·  击杀 ${p?.kills||0}`:`日军 ${this.score.blue}  —  ${this.score.red} 中国军队`;this.hudLabels.get('time')!.string=this.phase==='countdown'?'任务准备':`${min}:${sec.toString().padStart(2,'0')} · ${this.weather==='day'?'白昼':'夜战'}`;this.hudLabels.get('health')!.string=p?`生命 ${Math.ceil(p.health)} / ${p.maxHealth}${vehicle?` · 载具 ${Math.ceil(vehicle.health)}/520`:p.isCommander?' · 队长':''}`:'生命 0';this.hudLabels.get('ammo')!.string=vehicle?`${vehicle.gun.magazine} / 0 · 车载机枪`:p?`${p.weapon.magazine} / ${p.weapon.reserve}${p.weapon.reloading?' · 换弹中':''}`:'';this.hudLabels.get('items')!.string=p?`手雷 ${p.grenades}   ·   医疗包 ${p.medkits}`:'';this.hudLabels.get('slots')!.string=slotText;this.hudLabels.get('weapon')!.string=vehicle?'车载九二式重机枪 · V 离开':p?`${WEAPONS[p.weaponId].displayName}  ·  武器槽 ${p.activeSlot}`:'';
     if (this.webHudHealth) this.webHudHealth.textContent=p?`生命 ${Math.ceil(p.health)} / ${p.maxHealth}${vehicle?` · 载具 ${Math.ceil(vehicle.health)}/520`:p.isCommander?' · 队长':''}`:'生命 0';
     if (this.webHudWeapon) this.webHudWeapon.textContent=vehicle?'车载 M2HB · V 离开':p?`${WEAPONS[p.weaponId].displayName} · 武器槽 ${p.activeSlot}`:'';
     if (this.webHudAmmo) this.webHudAmmo.textContent=vehicle?`${vehicle.gun.magazine} / 0`:p?`${p.weapon.magazine} / ${p.weapon.reserve}${p.weapon.reloading?' · 换弹中':''}`:'0 / 0';

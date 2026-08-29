@@ -1,12 +1,18 @@
 export const weaponAmmo = {
-  m16: [30, 600],m4a1:[30,600], mp5: [30, 600], m249: [150, 1200],
-  m107:[10,50],m200:[7,35],m2hb:[200,1200],
-  akm: [30, 600],ak74:[30,600], aks74u: [30, 600], rpk: [75, 750], pkm: [150, 1200],svd:[10,50],kord:[200,1200],glock17: [17, 119],awm:[10,50],
+  mp18:[32,320],'zhongzheng-shi':[5,120],zb26:[20,240],'type24-hmg':[100,600],
+  type38:[5,120],type100:[30,300],'type96-lmg':[30,360],'type92-hmg':[120,720],glock17:[17,119],
+  // Accept stale clients during the transition, but never advertise these IDs in new rooms.
+  m16:[30,600],m4a1:[30,600],mp5:[30,600],m249:[150,1200],m107:[10,50],m200:[7,35],m2hb:[200,1200],
+  akm:[30,600],ak74:[30,600],aks74u:[30,600],rpk:[75,750],pkm:[150,1200],svd:[10,50],kord:[200,1200],awm:[10,50],
 };
 
 export const teamWeapons = {
-  blue:['m16','mp5','m4a1','m249','m107','m200','m2hb'],
-  red:['akm','aks74u','ak74','rpk','pkm','svd','kord'],
+  blue:['type38','type100','type96-lmg','type92-hmg'],
+  red:['zhongzheng-shi','mp18','zb26','type24-hmg'],
+};
+const legacyWeaponMap = {
+  m16:'type38',m4a1:'type38',mp5:'type100',m249:'type96-lmg',m107:'type38',m200:'type38',m2hb:'type92-hmg',
+  akm:'zhongzheng-shi',ak74:'zhongzheng-shi',aks74u:'mp18',rpk:'zb26',pkm:'type24-hmg',svd:'zhongzheng-shi',kord:'type24-hmg',awm:'type38',
 };
 export const missions = ['conquest','command-strike','airborne-assault','intel-recovery','hostage-rescue','bomb-defusal','vip-escort','arms-seizure','perimeter-sweep','encirclement','sabotage-raid','convoy-ambush','command-defense','cache-defense','battle-royale','extraction-intercept','communications-raid','corridor-denial','evacuation-cover','safehouse-raid','supply-line-disruption'];
 export const maps = ['city','city-riverside','military-base','military-depot','harbor-terminal','harbor-shipyard','refinery','power-station','mountain-checkpoint','mountain-radar','desert-outpost','desert-village','forest-station','forest-depot','airport-cargo','airport-perimeter'];
@@ -18,8 +24,8 @@ export function clampNumber(value, min, max, fallback = 0) {
 export function clampInt(value, min, max, fallback = 0) { return Math.floor(clampNumber(value, min, max, fallback)); }
 export function safeName(value) { return String(value || 'Player').replace(/[^\p{L}\p{N}_-]/gu, '').slice(0, 16) || 'Player'; }
 export function safeTeam(value) { return value === 'red' ? 'red' : 'blue'; }
-export function safePrimary(team, value) { return teamWeapons[team].includes(value) ? value : teamWeapons[team][0]; }
-export function safeWeaponForPlayer(player, value) { return Object.hasOwn(weaponAmmo,value) ? value : player.activeWeapon; }
+export function safePrimary(team, value) { const normalized=legacyWeaponMap[value]||value; return teamWeapons[team].includes(normalized) ? normalized : teamWeapons[team][0]; }
+export function safeWeaponForPlayer(player, value) { const normalized=legacyWeaponMap[value]||value, fallback=legacyWeaponMap[player.activeWeapon]||player.activeWeapon; return Object.hasOwn(weaponAmmo,normalized) ? normalized : Object.hasOwn(weaponAmmo,fallback) ? fallback : 'type38'; }
 export function safeMap(value) { return maps.includes(value) ? value : 'city'; }
 export function safeMission(value) { return missions.includes(value) ? value : 'conquest'; }
 export function safeMissionTeam(value) { return value === 'red' ? 'red' : 'blue'; }
@@ -51,7 +57,7 @@ export function sanitizeWorldSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== 'object' || !Array.isArray(snapshot.actors) || !Array.isArray(snapshot.objectives)) return null;
   const actors = snapshot.actors.slice(0, 24).flatMap(actor => {
     if (!actor || typeof actor !== 'object' || typeof actor.id !== 'string' || !Array.isArray(actor.position)) return [];
-    const weaponId = Object.hasOwn(weaponAmmo, actor.weaponId) ? actor.weaponId : 'm16'; const [magazineSize, reserveAmmo] = weaponAmmo[weaponId];
+    const weaponId = Object.hasOwn(weaponAmmo, actor.weaponId) ? (legacyWeaponMap[actor.weaponId]||actor.weaponId) : 'type38'; const [magazineSize, reserveAmmo] = weaponAmmo[weaponId];
     return [{
       id: actor.id.slice(0, 40), position: [clampNumber(actor.position[0], -87, 87), clampNumber(actor.position[1], -4.2, 20), clampNumber(actor.position[2], -87, 87)],
       yaw: clampNumber(actor.yaw, -360000, 360000), pitch: clampNumber(actor.pitch, -80, 80),

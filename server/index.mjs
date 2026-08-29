@@ -78,7 +78,7 @@ function detach(player) {
 }
 
 wss.on('connection', socket => {
-  const player = { id: `p${nextPlayerId++}`, name: 'Player', team: 'blue', weapon: 'm16', activeWeapon: 'm16', socket, room: null, rate: new Map() };
+  const player = { id: `p${nextPlayerId++}`, name: 'Player', team: 'blue', weapon: 'type38', activeWeapon: 'type38', socket, room: null, rate: new Map() };
   clients.set(socket, player); socket.isAlive = true; send(socket, { type: 'welcome', id: player.id });
   socket.on('pong', () => { socket.isAlive = true; });
   socket.on('message', (raw, isBinary) => {

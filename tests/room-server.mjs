@@ -26,13 +26,13 @@ try {
   if(!health.ok||health.rooms!==0)throw new Error(`health check failed: ${JSON.stringify(health)}`);
   for(let i=0;i<4;i+=1)clients.push(await connect());
   const welcomes=await Promise.all(clients.map(client=>client.waitFor(message=>message.type==='welcome')));
-  clients[0].socket.send(JSON.stringify({type:'create',code:'ROOM42',name:'Host',team:'blue',weapon:'m16'}));
+  clients[0].socket.send(JSON.stringify({type:'create',code:'ROOM42',name:'Host',team:'blue',weapon:'type38'}));
   const created=await clients[0].waitFor(message=>message.type==='room'&&message.code);const roomCode=created.code;if(roomCode!=='ROOM42')throw new Error(`custom room code rejected: ${roomCode}`);
-  clients[1].socket.send(JSON.stringify({type:'create',code:'bad',name:'Bad',team:'red',weapon:'akm'}));
+  clients[1].socket.send(JSON.stringify({type:'create',code:'bad',name:'Bad',team:'red',weapon:'zhongzheng-shi'}));
   const invalidCode=await clients[1].waitFor(message=>message.type==='error'&&message.message.includes('6 位'));if(!invalidCode)throw new Error('invalid custom room code was accepted');
-  clients[1].socket.send(JSON.stringify({type:'create',code:'ROOM42',name:'Duplicate',team:'red',weapon:'akm'}));
+  clients[1].socket.send(JSON.stringify({type:'create',code:'ROOM42',name:'Duplicate',team:'red',weapon:'zhongzheng-shi'}));
   const duplicateCode=await clients[1].waitFor(message=>message.type==='error'&&message.message.includes('被使用'));if(!duplicateCode)throw new Error('duplicate custom room code was accepted');
-  for(let i=1;i<4;i+=1)clients[i].socket.send(JSON.stringify({type:'join',code:roomCode,name:`Player${i}`,team:'blue',weapon:'mp5'}));
+  for(let i=1;i<4;i+=1)clients[i].socket.send(JSON.stringify({type:'join',code:roomCode,name:`Player${i}`,team:'blue',weapon:'type100'}));
   const fullRoom=await clients[0].waitFor(message=>message.type==='room'&&message.players.length===4);
   const blue=fullRoom.players.filter(player=>player.team==='blue').length,red=fullRoom.players.length-blue;
   if(blue!==2||red!==2)throw new Error(`team balance failed ${blue}:${red}`);
@@ -44,7 +44,8 @@ try {
 
   clients[1].socket.send(JSON.stringify({type:'playerState',state:{position:[1,-99,2],yaw:45,pitch:999,stance:'invalid',weaponId:clientWeapon,magazine:999,reserve:9999,ads:true,reloading:false,climbing:true}}));
   const relayedState=await clients[0].waitFor(message=>message.type==='playerState'&&message.id===welcomes[1].id);
-  if(relayedState.state.magazine!==30||relayedState.state.reserve!==600||relayedState.state.position[1]!==-4.2||relayedState.state.pitch!==80||relayedState.state.stance!=='stand'||relayedState.state.ads!==true||relayedState.state.climbing!==true)throw new Error(`player state validation failed: ${JSON.stringify(relayedState.state)}`);
+  const expectedAmmo=clientWeapon==='zhongzheng-shi'?{magazine:5,reserve:120}:{magazine:30,reserve:300};
+  if(relayedState.state.magazine!==expectedAmmo.magazine||relayedState.state.reserve!==expectedAmmo.reserve||relayedState.state.position[1]!==-4.2||relayedState.state.pitch!==80||relayedState.state.stance!=='stand'||relayedState.state.ads!==true||relayedState.state.climbing!==true)throw new Error(`player state validation failed: ${JSON.stringify(relayedState.state)}`);
   clients[1].socket.send(JSON.stringify({type:'fire',weaponId:clientWeapon}));
   await clients[0].waitFor(message=>message.type==='fire'&&message.id===welcomes[1].id&&message.weaponId===clientWeapon);
   clients[1].socket.send(JSON.stringify({type:'reload',weaponId:clientWeapon}));

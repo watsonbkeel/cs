@@ -3,6 +3,10 @@ import { clamp, experienceForLevel, levelFromExperience } from './Rules';
 
 const STORAGE_KEY = 'ww2-web-profile-v1';
 const LEGACY_STORAGE_KEY = 'wechat-tactical-fps-profile-v1';
+const LEGACY_WEAPON_MAP: Record<string, PrimaryWeaponId> = {
+  m16: 'type38', m4a1: 'type38', mp5: 'type100', m249: 'type96-lmg', m107: 'type38', m200: 'type38', m2hb: 'type92-hmg',
+  akm: 'zhongzheng-shi', ak74: 'zhongzheng-shi', aks74u: 'mp18', rpk: 'zb26', pkm: 'type24-hmg', svd: 'zhongzheng-shi', kord: 'type24-hmg',
+};
 const ATTACHMENTS: AttachmentId[] = [
   'red-dot', '2x', '4x', '6x', 'grip', 'collapsible-stock', 'folding-stock',
   'barrel', 'heavy-barrel', 'precision-barrel',
@@ -11,11 +15,11 @@ export interface KeyValueStorage { getItem(key: string): string | null; setItem(
 
 export function defaultProfile(): PlayerProfileV1 {
   return {
-    version: 3, coins: 1000, xp: 0, level: 1, selectedPrimary:{blue:'m16',red:'akm'}, ownedAttachments: [],
+    version: 3, coins: 1000, xp: 0, level: 1, selectedPrimary:{blue:'type38',red:'zhongzheng-shi'}, ownedAttachments: [],
     loadouts: {
-      m16:{...DEFAULT_LOADOUT},m4a1:{...DEFAULT_LOADOUT},mp5:{...DEFAULT_LOADOUT},m249:{...DEFAULT_LOADOUT},m107:{...DEFAULT_LOADOUT,optic:'6x'},m200:{...DEFAULT_LOADOUT,optic:'6x'},m2hb:{...DEFAULT_LOADOUT},
-      akm:{...DEFAULT_LOADOUT},ak74:{...DEFAULT_LOADOUT},aks74u:{...DEFAULT_LOADOUT},rpk:{...DEFAULT_LOADOUT},pkm:{...DEFAULT_LOADOUT},svd:{...DEFAULT_LOADOUT,optic:'4x'},kord:{...DEFAULT_LOADOUT},
-      glock17: { ...DEFAULT_LOADOUT }, awm: { ...DEFAULT_LOADOUT, optic: '4x' },
+      mp18:{...DEFAULT_LOADOUT},'zhongzheng-shi':{...DEFAULT_LOADOUT},zb26:{...DEFAULT_LOADOUT},'type24-hmg':{...DEFAULT_LOADOUT},
+      type38:{...DEFAULT_LOADOUT},type100:{...DEFAULT_LOADOUT},'type96-lmg':{...DEFAULT_LOADOUT},'type92-hmg':{...DEFAULT_LOADOUT},
+      glock17: { ...DEFAULT_LOADOUT },
     },
     settings: { ...DEFAULT_SETTINGS }, settledMatchIds: [],
   };
@@ -47,7 +51,8 @@ export function repairProfile(value: unknown): PlayerProfileV1 {
   const migratedXp = Number.isFinite(raw.xp) ? Math.max(0, Math.floor(raw.xp)) : experienceForLevel(Number(raw.level) || 1);
   const level = levelFromExperience(migratedXp);
   const selectedPrimary=(team:Team,fallback:PrimaryWeaponId):PrimaryWeaponId=>{
-    const requested=raw.selectedPrimary?.[team] as PrimaryWeaponId;
+    const saved=raw.selectedPrimary?.[team] as string;
+    const requested=(LEGACY_WEAPON_MAP[saved] || saved) as PrimaryWeaponId;
     return PRIMARY_WEAPONS[team].includes(requested)&&level>=WEAPON_UNLOCK_LEVEL[requested]?requested:fallback;
   };
   const settledMatchIds = Array.isArray(raw.settledMatchIds)
@@ -61,14 +66,18 @@ export function repairProfile(value: unknown): PlayerProfileV1 {
     coins: legacyUntouchedBalance ? 1000 : clamp(Number.isFinite(raw.coins) ? Math.floor(raw.coins) : 1000, 0, 99999999),
     xp: migratedXp,
     level,
-    selectedPrimary:{blue:selectedPrimary('blue','m16'),red:selectedPrimary('red','akm')},
+    selectedPrimary:{blue:selectedPrimary('blue','type38'),red:selectedPrimary('red','zhongzheng-shi')},
     ownedAttachments: owned,
     loadouts: {
-      m16:cleanLoadout(raw.loadouts?.m16,owned,'m16'),m4a1:cleanLoadout(raw.loadouts?.m4a1,owned,'m4a1'),mp5:cleanLoadout(raw.loadouts?.mp5,owned,'mp5'),m249:cleanLoadout(raw.loadouts?.m249,owned,'m249'),
-      m107:cleanLoadout(raw.loadouts?.m107,owned,'m107'),m200:cleanLoadout(raw.loadouts?.m200,owned,'m200'),m2hb:cleanLoadout(raw.loadouts?.m2hb,owned,'m2hb'),akm:cleanLoadout(raw.loadouts?.akm,owned,'akm'),
-      ak74:cleanLoadout(raw.loadouts?.ak74,owned,'ak74'),aks74u: cleanLoadout(raw.loadouts?.aks74u, owned,'aks74u'), rpk: cleanLoadout(raw.loadouts?.rpk, owned,'rpk'),
-      pkm:cleanLoadout(raw.loadouts?.pkm,owned,'pkm'),svd:cleanLoadout(raw.loadouts?.svd,owned,'svd'),kord:cleanLoadout(raw.loadouts?.kord,owned,'kord'),
-      glock17: cleanLoadout(raw.loadouts?.glock17, owned,'glock17'), awm:cleanLoadout(raw.loadouts?.awm,owned,'awm'),
+      mp18:cleanLoadout(raw.loadouts?.mp18 ?? raw.loadouts?.aks74u,owned,'mp18'),
+      'zhongzheng-shi':cleanLoadout(raw.loadouts?.['zhongzheng-shi'] ?? raw.loadouts?.akm,owned,'zhongzheng-shi'),
+      zb26:cleanLoadout(raw.loadouts?.zb26 ?? raw.loadouts?.rpk,owned,'zb26'),
+      'type24-hmg':cleanLoadout(raw.loadouts?.['type24-hmg'] ?? raw.loadouts?.pkm,owned,'type24-hmg'),
+      type38:cleanLoadout(raw.loadouts?.type38 ?? raw.loadouts?.m16,owned,'type38'),
+      type100:cleanLoadout(raw.loadouts?.type100 ?? raw.loadouts?.mp5,owned,'type100'),
+      'type96-lmg':cleanLoadout(raw.loadouts?.['type96-lmg'] ?? raw.loadouts?.m249,owned,'type96-lmg'),
+      'type92-hmg':cleanLoadout(raw.loadouts?.['type92-hmg'] ?? raw.loadouts?.m2hb,owned,'type92-hmg'),
+      glock17: cleanLoadout(raw.loadouts?.glock17, owned,'glock17'),
     },
     settings: {
       lookSensitivity: clamp(Number(settings.lookSensitivity) || DEFAULT_SETTINGS.lookSensitivity, 0.04, 0.5),
