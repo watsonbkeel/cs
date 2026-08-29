@@ -85,6 +85,34 @@ export interface WeaponDefinition {
   category: 'rifle' | 'smg' | 'lmg' | 'sniper' | 'hmg' | 'pistol';
 }
 
+/**
+ * First-person presentation hints.  Gameplay values intentionally remain in
+ * WeaponDefinition; these values only describe how a viewmodel is composed.
+ */
+export interface WeaponViewModelProfile {
+  hipPosition: readonly [number, number, number];
+  adsPosition: readonly [number, number, number];
+  hipRotation: readonly [number, number, number];
+  adsRotation: readonly [number, number, number];
+  hipScale: number;
+  adsScale: number;
+  reloadDrop: number;
+}
+
+export const WEAPON_VIEWMODEL_PROFILES: Partial<Record<WeaponId, WeaponViewModelProfile>> = {
+  'zhongzheng-shi': {
+    // Keep the rifle in the lower-right at hip fire; ADS is a separate,
+    // sight-only composition and does not move a full rifle over the reticle.
+    hipPosition: [0.08, -0.03, 0],
+    adsPosition: [-0.035, 0.18, 0.015],
+    hipRotation: [-8, 0, -9],
+    adsRotation: [-2, 0, -1],
+    hipScale: 0.96,
+    adsScale: 0.9,
+    reloadDrop: -0.16,
+  },
+};
+
 export interface WeaponRuntime { magazine: number; reserve: number; lastShotAt: number; reloading: boolean; }
 export interface MatchReward { kills: number; completed: boolean; won: boolean; }
 
