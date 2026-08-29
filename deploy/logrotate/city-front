@@ -1,0 +1,9 @@
+/home/chenyifan/apps/city-front/logs/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}

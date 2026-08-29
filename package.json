@@ -1,0 +1,29 @@
+{
+  "name": "city-front-web-fps",
+  "uuid": "c30b28da-749e-479b-bcb6-cecd8d7be9e3",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cocos Creator 3.8 desktop web tactical FPS",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "server": "node server/index.mjs",
+    "check:server": "node --check server/index.mjs",
+    "health": "node tools/health-check.mjs",
+    "test:protocol": "node tests/server-protocol.test.mjs",
+    "test:rooms": "node tests/room-server.mjs",
+    "validate:education": "node tools/validate-education-miniprogram.js",
+    "serve:education": "python3 tools/serve-education-local.py"
+  },
+  "creator": {
+    "version": "3.8.7"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "playwright": "^1.54.1"
+  }
+}

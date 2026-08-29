@@ -1,0 +1,21 @@
+<view class="page-shell">
+  <web-view
+    wx:if="{{showWebView}}"
+    class="game-view"
+    src="{{gameUrl}}"
+    bindload="handleWebViewLoad"
+    binderror="handleWebViewError"
+  ></web-view>
+
+  <view wx:else class="status-view">
+    <view class="status-panel">
+      <view class="status-title">{{message}}</view>
+      <button
+        wx:if="{{canRetry}}"
+        class="retry-button"
+        bindtap="handleRetry"
+        hover-class="retry-button--pressed"
+      >重新加载</button>
+    </view>
+  </view>
+</view>

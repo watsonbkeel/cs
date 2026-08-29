@@ -1,0 +1,30 @@
+[Unit]
+Description=City Front Web and Room Server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=chenyifan
+Group=chenyifan
+WorkingDirectory=/home/chenyifan/apps/city-front/current
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=7460
+EnvironmentFile=-/home/chenyifan/apps/city-front/shared/city-front.env
+ExecStart=/usr/bin/node server/index.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=city-front
+
+[Install]
+WantedBy=multi-user.target

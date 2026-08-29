@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ headless: true, args: ['--use-angle=swiftshader', '--enable-webgl'] });
+const page = await browser.newPage({ viewport: { width: 844, height: 390 } });
+const errors = [];
+page.on('pageerror', error => errors.push(error.message));
+await page.goto('http://127.0.0.1:7456', { waitUntil: 'domcontentloaded' });
+await page.waitForFunction(() => globalThis.__FPS_GAME__?.state, null, { timeout: 45000 });
+await page.evaluate(() => globalThis.__FPS_GAME__.start('red'));
+await page.waitForTimeout(4200);
+await page.screenshot({ path: 'test-results/battle-red-844x390.png' });
+console.log(JSON.stringify({ state: await page.evaluate(() => globalThis.__FPS_GAME__.state()), errors }));
+await browser.close();

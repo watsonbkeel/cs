@@ -1,0 +1,8 @@
+node_modules
+library
+temp
+test-results
+education-miniprogram
+.DS_Store
+.git
+*.log

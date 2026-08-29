@@ -1,0 +1,18 @@
+{$GAME_DOMAIN} {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:7460
+
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+
+    log {
+        output file /home/chenyifan/apps/city-front/logs/access.log {
+            roll_size 20MiB
+            roll_keep 10
+            roll_keep_for 720h
+        }
+    }
+}
