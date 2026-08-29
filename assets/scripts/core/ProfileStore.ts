@@ -1,7 +1,7 @@
 import { AttachmentId, BarrelId, BUILT_IN_OPTICS, DEFAULT_LOADOUT, DEFAULT_SETTINGS, OpticId, PlayerProfileV1, PRIMARY_WEAPONS, PrimaryWeaponId, StockId, Team, WEAPON_UNLOCK_LEVEL, WeaponId, WeaponLoadout } from './GameTypes';
 import { clamp, experienceForLevel, levelFromExperience } from './Rules';
 
-const STORAGE_KEY = 'city-front-web-profile-v1';
+const STORAGE_KEY = 'ww2-web-profile-v1';
 const LEGACY_STORAGE_KEY = 'wechat-tactical-fps-profile-v1';
 const ATTACHMENTS: AttachmentId[] = [
   'red-dot', '2x', '4x', '6x', 'grip', 'collapsible-stock', 'folding-stock',

@@ -2161,37 +2161,39 @@ export class GameBootstrap extends Component {
     const actorId=networkId?`human-${networkId}`:`${team}-${isPlayer?'p':`ai${index}`}`;
     const node = new Node(actorId); this.worldRoot.addChild(node);
     const freeForAll=this.selectedMission==='battle-royale';
-    const uniform = this.material(freeForAll?'battle-royale-uniform':team, freeForAll?new Color(82,86,84):team === 'blue' ? new Color(34,76,124) : new Color(108,55,43), 0.03, freeForAll?0.88:team==='blue'?0.84:0.92);
-    const gear = this.material(freeForAll?'battle-royale-gear':`${team}-gear`,freeForAll?new Color(39,42,41):team === 'blue' ? new Color(20,31,40) : new Color(58,46,32),freeForAll?0.12:team==='blue'?0.16:0.04,freeForAll?0.74:team==='blue'?0.67:0.88);
-    const skin=this.material('characterSkin',new Color(151,116,88),0.01,0.82),boots=this.material('characterBoots',new Color(24,25,23),0.1,0.78),weaponMat=this.material('actorWeapon',new Color(38,42,41),0.92,0.21);
-    const goggles=this.material('operatorGoggles',new Color(20,38,45),0.58,0.16),utility=this.material('operatorUtility',new Color(29,31,29),0.22,0.7);
-    const redCloth=this.material('redFactionCloth',new Color(92,66,48),0.01,0.94),redWebbing=this.material('redFactionWebbing',new Color(67,70,48),0.03,0.9);
+    // Keep the internal team IDs red/blue, but give each faction a WWII palette:
+    // red = Chinese Nationalist Army (grey-green), blue = Japanese Army (khaki).
+    const uniform = this.material(freeForAll?'battle-royale-uniform':team, freeForAll?new Color(82,86,84):team === 'blue' ? new Color(142,116,67) : new Color(96,105,82), 0.03, freeForAll?0.88:team==='blue'?0.9:0.94);
+    const gear = this.material(freeForAll?'battle-royale-gear':`${team}-gear`,freeForAll?new Color(39,42,41):team === 'blue' ? new Color(82,61,37) : new Color(72,74,54),freeForAll?0.12:team==='blue'?0.04:0.03,freeForAll?0.74:0.9);
+    const skin=this.material('characterSkin',new Color(151,116,88),0.01,0.82),boots=this.material('characterBoots',new Color(35,31,24),0.06,0.9),weaponMat=this.material('actorWeapon',new Color(38,42,41),0.92,0.21);
+    const goggles=this.material('operatorGoggles',new Color(20,38,45),0.58,0.16),utility=this.material('operatorUtility',new Color(52,48,38),0.08,0.86);
+    const redCloth=this.material('redFactionCloth',new Color(104,112,82),0.01,0.96),redWebbing=this.material('redFactionWebbing',new Color(67,77,53),0.02,0.94);
     this.box('Torso',new Vec3(0,1.18,0),new Vec3(0.62,0.78,0.36),uniform,node);
-    this.box('Vest',new Vec3(0,1.18,-0.2),new Vec3(0.68,0.68,0.12),gear,node);
+    this.box('Vest',new Vec3(0,1.18,-0.2),new Vec3(0.68,0.68,0.12),gear,node).active=false;
     this.box('Pelvis',new Vec3(0,0.76,0),new Vec3(0.52,0.28,0.34),gear,node);
     this.sphere('Head',new Vec3(0,1.78,0),new Vec3(0.38,0.42,0.38),skin,node);
     this.box('Helmet',new Vec3(0,1.99,0),new Vec3(0.46,0.2,0.44),gear,node).active=team==='blue';
     this.sphere('HelmetCrown',new Vec3(0,2.02,0.015),new Vec3(0.49,0.25,0.46),gear,node).active=team==='blue';
-    this.box('FaceMask',new Vec3(0,1.69,-0.205),new Vec3(0.34,0.25,0.055),gear,node);
-    this.box('Goggles',new Vec3(0,1.84,-0.225),new Vec3(0.36,0.105,0.045),goggles,node).active=team==='blue';
-    this.box('NVGMount',new Vec3(0,2.04,-0.245),new Vec3(0.14,0.11,0.055),utility,node).active=team==='blue';
-    this.box('HelmetRailL',new Vec3(-0.25,1.99,0),new Vec3(0.045,0.075,0.3),utility,node).active=team==='blue';
-    this.box('HelmetRailR',new Vec3(0.25,1.99,0),new Vec3(0.045,0.075,0.3),utility,node).active=team==='blue';
-    this.box('EarProtectionL',new Vec3(-0.255,1.84,0),new Vec3(0.075,0.19,0.14),gear,node).active=team==='blue';
-    this.box('EarProtectionR',new Vec3(0.255,1.84,0),new Vec3(0.075,0.19,0.14),gear,node).active=team==='blue';
+    this.box('FaceMask',new Vec3(0,1.69,-0.205),new Vec3(0.34,0.25,0.055),gear,node).active=false;
+    this.box('Goggles',new Vec3(0,1.84,-0.225),new Vec3(0.36,0.105,0.045),goggles,node).active=false;
+    this.box('NVGMount',new Vec3(0,2.04,-0.245),new Vec3(0.14,0.11,0.055),utility,node).active=false;
+    this.box('HelmetRailL',new Vec3(-0.25,1.99,0),new Vec3(0.045,0.075,0.3),utility,node).active=false;
+    this.box('HelmetRailR',new Vec3(0.25,1.99,0),new Vec3(0.045,0.075,0.3),utility,node).active=false;
+    this.box('EarProtectionL',new Vec3(-0.255,1.84,0),new Vec3(0.075,0.19,0.14),gear,node).active=false;
+    this.box('EarProtectionR',new Vec3(0.255,1.84,0),new Vec3(0.075,0.19,0.14),gear,node).active=false;
     this.sphere('HeadWrap',new Vec3(0,1.96,0.01),new Vec3(0.47,0.23,0.44),redCloth,node).active=team==='red';
     this.box('BrowWrap',new Vec3(0,1.86,-0.215),new Vec3(0.39,0.11,0.05),redCloth,node).active=team==='red';
     this.box('NeckScarf',new Vec3(0,1.56,-0.02),new Vec3(0.44,0.18,0.38),redCloth,node).active=team==='red';
     this.box('ScarfTailL',new Vec3(-0.17,1.48,0.18),new Vec3(0.13,0.36,0.08),redCloth,node).active=team==='red';
     this.box('ScarfTailR',new Vec3(0.05,1.46,0.2),new Vec3(0.11,0.3,0.08),redCloth,node).active=team==='red';
     this.box('Backpack',new Vec3(0,1.22,0.24),new Vec3(0.52,0.62,0.18),gear,node);
-    this.box('ShoulderPadL',new Vec3(-0.43,1.42,-0.015),new Vec3(0.23,0.18,0.3),gear,node).active=team==='blue';
-    this.box('ShoulderPadR',new Vec3(0.43,1.42,-0.015),new Vec3(0.23,0.18,0.3),gear,node).active=team==='blue';
+    this.box('ShoulderPadL',new Vec3(-0.43,1.42,-0.015),new Vec3(0.23,0.18,0.3),gear,node).active=false;
+    this.box('ShoulderPadR',new Vec3(0.43,1.42,-0.015),new Vec3(0.23,0.18,0.3),gear,node).active=false;
     for(const [name,x] of [['ChestPouchL',-0.22],['ChestPouchC',0],['ChestPouchR',0.22]] as const)this.box(name,new Vec3(x,1.14,-0.285),new Vec3(0.18,0.29,0.12),gear,node);
-    this.box('TacticalBelt',new Vec3(0,0.86,-0.01),new Vec3(0.6,0.12,0.39),utility,node);
+    this.box('TacticalBelt',new Vec3(0,0.86,-0.01),new Vec3(0.6,0.12,0.39),gear,node);
     this.box('Holster',new Vec3(0.35,0.66,-0.02),new Vec3(0.15,0.34,0.22),gear,node);
-    this.box('Radio',new Vec3(-0.34,1.28,0.22),new Vec3(0.16,0.3,0.13),utility,node).active=team==='blue';
-    this.box('RadioAntenna',new Vec3(-0.39,1.62,0.23),new Vec3(0.035,0.48,0.035),utility,node).active=team==='blue';
+    this.box('Radio',new Vec3(-0.34,1.28,0.22),new Vec3(0.16,0.3,0.13),utility,node).active=false;
+    this.box('RadioAntenna',new Vec3(-0.39,1.62,0.23),new Vec3(0.035,0.48,0.035),utility,node).active=false;
     this.box('ChestRig',new Vec3(0,1.13,-0.255),new Vec3(0.58,0.43,0.1),redWebbing,node).active=team==='red';
     this.box('BandolierL',new Vec3(-0.13,1.23,-0.31),new Vec3(0.12,0.72,0.07),redCloth,node).active=team==='red';
     this.box('BandolierR',new Vec3(0.15,1.21,-0.315),new Vec3(0.1,0.65,0.07),redWebbing,node).active=team==='red';
@@ -2205,7 +2207,7 @@ export class GameBootstrap extends Component {
       this.box(`Glove${suffix}`,new Vec3(side*0.27,1.03,-0.48),new Vec3(0.17,0.18,0.18),gear,node);
       this.box(`Thigh${suffix}`,new Vec3(side*0.17,0.5,0),new Vec3(0.24,0.52,0.27),uniform,node);
       this.box(`Calf${suffix}`,new Vec3(side*0.17,0.18,0),new Vec3(0.22,0.46,0.24),uniform,node);
-      this.box(`KneePad${suffix}`,new Vec3(side*0.17,0.34,-0.145),new Vec3(0.25,0.22,0.07),gear,node).active=team==='blue';
+      this.box(`KneePad${suffix}`,new Vec3(side*0.17,0.34,-0.145),new Vec3(0.25,0.22,0.07),gear,node).active=false;
       this.box(`ElbowWrap${suffix}`,new Vec3(side*0.36,1.15,-0.18),new Vec3(0.21,0.14,0.23),redCloth,node).active=team==='red';
       this.box(`KneeWrap${suffix}`,new Vec3(side*0.17,0.34,-0.14),new Vec3(0.26,0.2,0.08),redWebbing,node).active=team==='red';
       this.box(`Boot${suffix}`,new Vec3(side*0.17,0.07,-0.1),new Vec3(0.24,0.18,0.42),boots,node);
@@ -2378,7 +2380,7 @@ export class GameBootstrap extends Component {
         for(const side of [-1,1]){const suffix=side<0?'L':'R',phase=side<0?cycle:-cycle;part(`UpperArm${suffix}`)?.setPosition(side*0.42,1.27-drop,-0.03);part(`UpperArm${suffix}`)?.setRotationFromEuler(phase*24,0,side*5);part(`Forearm${suffix}`)?.setPosition(side*0.34,1.08-drop,-0.28);part(`Forearm${suffix}`)?.setRotationFromEuler(-28+phase*10,0,side*5);part(`Glove${suffix}`)?.setPosition(side*0.27,1.03-drop,-0.48);part(`Thigh${suffix}`)?.setPosition(side*0.17,0.5-drop*0.45,phase*0.06);part(`Thigh${suffix}`)?.setRotationFromEuler(phase*28+(crouch?-24:0),0,0);part(`Calf${suffix}`)?.setPosition(side*0.17,0.18,phase*-0.05);part(`Calf${suffix}`)?.setRotationFromEuler(-phase*22+(crouch?32:0),0,0);part(`Boot${suffix}`)?.setPosition(side*0.17,0.07,-0.1+phase*0.08);}
         this.poseFactionGear(part,actor.team,crouch?'crouch':'stand',drop,cycle);
       }
-      const visual=WEAPON_VISUALS[actor.weaponId],actorLoadout=this.actorLoadout(actor),baseX=stance==='prone'?0.2:0.3,baseY=stance==='prone'?0.45:stance==='crouch'?0.79:1.17,receiverZ=stance==='prone'?-0.72:-0.44,barrelCenter=receiverZ-visual.receiver/2-visual.barrel/2+0.04,wood=this.material('weaponWood',new Color(104,62,34),0.03,0.62),metal=this.material('actorWeapon',new Color(38,42,41),0.92,0.21),actorGear=this.material(`${actor.team}-gear`,actor.team==='blue'?new Color(20,31,40):new Color(48,28,24),0.16,0.67);
+      const visual=WEAPON_VISUALS[actor.weaponId],actorLoadout=this.actorLoadout(actor),baseX=stance==='prone'?0.2:0.3,baseY=stance==='prone'?0.45:stance==='crouch'?0.79:1.17,receiverZ=stance==='prone'?-0.72:-0.44,barrelCenter=receiverZ-visual.receiver/2-visual.barrel/2+0.04,wood=this.material('weaponWood',new Color(104,62,34),0.03,0.62),metal=this.material('actorWeapon',new Color(38,42,41),0.92,0.21),actorGear=this.material(`${actor.team}-gear`,actor.team==='blue'?new Color(82,61,37):new Color(72,74,54),0.04,0.9);
       weapon?.setPosition(baseX,baseY,receiverZ);weapon?.setScale(visual.width,visual.heavy?0.19:0.14,visual.receiver);weapon?.getComponent(MeshRenderer)?.setSharedMaterial(metal,0);if(weaponBarrel)weaponBarrel.active=false;const actorBarrel=part('WeaponBarrelRound'),actorMuzzle=part('WeaponMuzzleRound'),actorGas=part('WeaponGasTubeRound');actorBarrel?.setPosition(baseX,baseY,barrelCenter);actorBarrel?.setScale(visual.heavy?0.085:0.055,visual.barrel,visual.heavy?0.085:0.055);actorMuzzle?.setPosition(baseX,baseY,barrelCenter-visual.barrel/2-0.06);actorMuzzle?.setScale(visual.heavy?0.12:0.075,visual.heavy?0.2:0.12,visual.heavy?0.12:0.075);actorGas?.setPosition(baseX,baseY+0.07,receiverZ-visual.receiver/2-visual.handguard/2+0.08);actorGas?.setScale(visual.heavy?0.07:0.05,visual.handguard*0.9,visual.heavy?0.07:0.05);
       const actorHandguard=part('WeaponHandguard'),actorStock=part('WeaponStock'),actorMagazine=part('WeaponMagazine'),actorOptic=part('WeaponOptic');actorHandguard?.setPosition(baseX,baseY,receiverZ-visual.receiver/2-visual.handguard/2+0.08);actorHandguard?.setScale(visual.width*0.92,visual.heavy?0.15:0.12,visual.handguard);actorHandguard?.getComponent(MeshRenderer)?.setSharedMaterial(visual.wood?wood:actorGear,0);actorStock?.setPosition(baseX,baseY,receiverZ+visual.receiver/2+visual.stock/2-0.04);actorStock?.setScale(visual.width*0.88,visual.heavy?0.19:0.15,visual.stock);actorStock?.getComponent(MeshRenderer)?.setSharedMaterial(visual.wood?wood:actorGear,0);actorMagazine?.setPosition(baseX,baseY-0.18,receiverZ+0.03);actorMagazine?.setScale(visual.magazine==='box'?visual.width*1.25:0.11,visual.magazine==='box'?0.25:0.23,visual.magazine==='box'?0.28:0.15);actorMagazine?.getComponent(MeshRenderer)?.setSharedMaterial(visual.wood?wood:actorGear,0);const actorRail=part('WeaponTopRail'),actorGrip=part('WeaponPistolGrip'),actorFrontSight=part('WeaponFrontSight'),actorRearSight=part('WeaponRearSight');actorRail?.setPosition(baseX,baseY+(visual.heavy?0.14:0.1),receiverZ);actorRail?.setScale(visual.width*0.75,0.024,visual.receiver*0.78);actorGrip?.setPosition(baseX,baseY-0.17,receiverZ+visual.receiver*0.3);actorFrontSight?.setPosition(baseX,baseY+0.14,barrelCenter-visual.barrel*0.32);actorRearSight?.setPosition(baseX,baseY+0.14,receiverZ+visual.receiver*0.3);for(const name of ['WeaponBipodL','WeaponBipodR']){const bipod=part(name);if(bipod){bipod.active=visual.bipod;bipod.setPosition(baseX+(name.endsWith('L')?-0.1:0.1),baseY-0.17,barrelCenter);bipod.setRotationFromEuler(0,0,name.endsWith('L')?-14:14);}}const optic=opticForWeapon(actor.weaponId,actorLoadout.optic);if(actorOptic){actorOptic.active=optic!=='none';actorOptic.setPosition(baseX,baseY+0.15,receiverZ-0.02);actorOptic.setScale(optic==='6x'?0.16:optic==='4x'?0.14:0.1,optic==='6x'?0.16:optic==='4x'?0.14:0.1,optic==='6x'?0.5:optic==='4x'?0.4:0.2);}if(actorFrontSight)actorFrontSight.active=optic==='none';if(actorRearSight)actorRearSight.active=optic==='none';
     }
