@@ -36,10 +36,10 @@ const PICKUP_COUNT = 9;
 interface WeaponVisualSpec { receiver:number; barrel:number; stock:number; handguard:number; width:number; magazine:'straight'|'curved'|'box'|'pistol'; wood:boolean; carry:boolean; bipod:boolean; heavy:boolean; }
 const WEAPON_VISUALS:Record<WeaponId,WeaponVisualSpec>={
   mp18:{receiver:0.52,barrel:0.34,stock:0.38,handguard:0.28,width:0.16,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
-  'zhongzheng-shi':{receiver:0.7,barrel:0.96,stock:0.5,handguard:0.62,width:0.16,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
+  'zhongzheng-shi':{receiver:0.74,barrel:0.91,stock:0.52,handguard:0.58,width:0.18,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
   zb26:{receiver:0.74,barrel:0.66,stock:0.42,handguard:0.44,width:0.2,magazine:'box',wood:true,carry:true,bipod:true,heavy:true},
   'type24-hmg':{receiver:0.96,barrel:0.82,stock:0.31,handguard:0.36,width:0.28,magazine:'box',wood:true,carry:true,bipod:true,heavy:true},
-  type38:{receiver:0.7,barrel:1.0,stock:0.5,handguard:0.64,width:0.16,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
+  type38:{receiver:0.62,barrel:1.08,stock:0.54,handguard:0.7,width:0.145,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
   type100:{receiver:0.56,barrel:0.4,stock:0.38,handguard:0.3,width:0.17,magazine:'straight',wood:true,carry:false,bipod:false,heavy:false},
   'type96-lmg':{receiver:0.76,barrel:0.68,stock:0.43,handguard:0.46,width:0.2,magazine:'curved',wood:true,carry:true,bipod:true,heavy:true},
   'type92-hmg':{receiver:0.98,barrel:0.8,stock:0.31,handguard:0.38,width:0.29,magazine:'box',wood:true,carry:true,bipod:true,heavy:true},
@@ -1769,7 +1769,7 @@ export class GameBootstrap extends Component {
 
   private drawWeaponPreview(parent:Node,weaponId:WeaponId,width:number):void{
     const spec=WEAPON_VISUALS[weaponId],def=WEAPONS[weaponId],total=spec.barrel+spec.receiver+Math.max(0.05,spec.stock),scale=width/Math.max(0.5,total),g=parent.addComponent(Graphics),receiverW=spec.receiver*scale,receiverH=Math.max(13,spec.width*scale*0.78),receiverL=-receiverW/2,receiverR=receiverW/2,handW=spec.handguard*scale,handL=receiverL-handW+7,stockW=spec.stock*scale,barrelL=receiverL-spec.barrel*scale;
-    const steel=new Color(82,87,83),steelHi=new Color(126,130,122),gunmetal=new Color(45,49,47),recess=new Color(13,15,15),polymer=new Color(25,29,28),wood=new Color(118,72,39),woodHi=new Color(158,105,61),body=spec.wood?wood:polymer;
+    const steel=new Color(82,87,83),steelHi=new Color(126,130,122),gunmetal=new Color(45,49,47),recess=new Color(13,15,15),polymer=new Color(25,29,28),wood=weaponId==='type38'?new Color(126,78,40):weaponId==='zhongzheng-shi'?new Color(108,63,31):new Color(118,72,39),woodHi=weaponId==='type38'?new Color(170,113,63):weaponId==='zhongzheng-shi'?new Color(151,95,49):new Color(158,105,61),body=spec.wood?wood:polymer;
     g.fillColor=new Color(0,0,0,75);g.roundRect(barrelL-8,-receiverH/2-8,total*scale+14,receiverH+24,4);g.fill();
     g.fillColor=steel;g.roundRect(receiverL,-receiverH/2,receiverW,receiverH,3);g.fill();g.fillColor=steelHi;g.rect(receiverL+4,receiverH*0.16,receiverW-8,2);g.fill();
     if(def.category!=='pistol'){
@@ -2889,9 +2889,10 @@ export class GameBootstrap extends Component {
     const id=this.player.weaponId,def=WEAPONS[id],spec=WEAPON_VISUALS[id],loadout=this.profileLoadout(id);
     const optic=opticForWeapon(id,loadout.optic),hasOptic=optic!=='none'&&def.category!=='pistol',showParts=!this.adsTarget;
     const part=(name:string)=>this.weaponView.getChildByName(name);
-    const gunmetal=this.material('weaponMetal',new Color(35,39,39),0.94,0.2),steel=this.material('weaponSteel',new Color(74,77,74),0.98,0.14),polymer=this.material('weaponPolymer',new Color(20,23,22),0.16,0.68),wood=this.material('weaponWood',new Color(104,62,34),0.03,0.62);
+    const gunmetal=this.material('weaponMetal',new Color(35,39,39),0.94,0.2),steel=this.material('weaponSteel',new Color(74,77,74),0.98,0.14),polymer=this.material('weaponPolymer',new Color(20,23,22),0.16,0.68),wood=this.material(id==='type38'?'type38Wood':id==='zhongzheng-shi'?'zhongzhengWood':'weaponWood',id==='type38'?new Color(112,70,38):id==='zhongzheng-shi'?new Color(96,57,31):new Color(104,62,34),0.03,0.68);
     const receiver=part('Receiver')!,upper=part('UpperReceiver')!,barrel=part('Barrel')!,handguard=part('Handguard')!,gas=part('GasTube')!,stock=part('Stock')!,stockPad=part('StockPad')!,magazine=part('Magazine')!,magazineLower=part('MagazineLower')!,boxMagazine=part('BoxMagazine')!;
     const barrelCenter=-(spec.receiver/2+spec.barrel/2-0.04),handguardCenter=-(spec.receiver/2+spec.handguard/2-0.08),stockCenter=spec.receiver/2+spec.stock/2-0.04;
+    const viewScale=id==='type38'?0.92:id==='zhongzheng-shi'?0.96:1;this.weaponView.setScale(viewScale,viewScale,viewScale);
     receiver.active=true;receiver.setPosition(0,0,0);receiver.setScale(spec.width,spec.heavy?0.19:0.14,spec.receiver);receiver.getComponent(MeshRenderer)?.setSharedMaterial(gunmetal,0);
     upper.active=def.category!=='pistol';upper.setScale(spec.width*0.9,0.055,spec.receiver*0.78);upper.setPosition(0,spec.heavy?0.12:0.085,-0.02);upper.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
     barrel.active=true;barrel.setPosition(0,0.02,barrelCenter);barrel.setScale(spec.heavy?0.085:0.055,spec.heavy?0.085:0.055,spec.barrel);barrel.getComponent(MeshRenderer)?.setSharedMaterial(gunmetal,0);
@@ -2944,7 +2945,7 @@ export class GameBootstrap extends Component {
     for(const name of ['FrontSightGuardL','FrontSightGuardR']){const guard=part(name)!;guard.active=detailed&&!hasOptic&&def.category!=='pistol';guard.setPosition(name.endsWith('L')?-0.045:0.045,0.14,barrelCenter-spec.barrel*0.32);}
     const customParts=['AKMagazineCurve','AKGasBlock','AKFrontSightBlock','AKStockAngle','M16CarryHandleDetail','M16TriangleHandguard','M16FrontPost','MP5CockingTube','MP5RetractStock','MP5MagazineCurve','RPKBipodMount','PKMFeedTray','SniperBoltBody','SniperCheekPiece','HMGReceiverTop'];
     for(const name of customParts)part(name)!.active=false;
-    const customWood=this.material('weaponWood',new Color(104,62,34),0.03,0.62);
+    const customWood=wood;
     if(detailed&&lmgFamily){
       const curve=part('AKMagazineCurve')!;curve.active=spec.magazine==='curved';curve.setPosition(0,-0.2,0.045);curve.setScale(spec.width*0.95,0.34,0.18);curve.setRotationFromEuler(-14,0,0);curve.getComponent(MeshRenderer)?.setSharedMaterial(polymer,0);
       const gasBlock=part('AKGasBlock')!;gasBlock.active=true;gasBlock.setPosition(0,0.08,barrelCenter+spec.barrel*0.32);gasBlock.setScale(spec.width*0.8,0.12,0.12);gasBlock.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
@@ -2955,6 +2956,10 @@ export class GameBootstrap extends Component {
       const tube=part('MP5CockingTube')!;tube.active=true;tube.setPosition(-spec.width*0.52,0.08,handguardCenter);tube.setScale(0.045,0.045,spec.handguard*1.22);tube.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
       const retract=part('MP5RetractStock')!;retract.active=true;retract.setPosition(0,-0.02,stockCenter);retract.setScale(0.04,0.04,spec.stock*1.12);retract.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
       const mp5Mag=part('MP5MagazineCurve')!;mp5Mag.active=false;
+    }
+    if(detailed&&boltFamily){
+      const boltBody=part('SniperBoltBody')!;boltBody.active=true;boltBody.setPosition(spec.width*0.7,0.04,spec.receiver*0.24);boltBody.setScale(0.04,0.04,spec.receiver*0.46);boltBody.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);
+      const cheekPiece=part('SniperCheekPiece')!;cheekPiece.active=false;
     }
     if(detailed&&lmgFamily){const bipod=part('RPKBipodMount')!;bipod.active=true;bipod.setPosition(0,-0.12,handguardCenter);bipod.setScale(spec.width*1.1,0.08,0.1);bipod.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);}
     if(detailed&&hmgFamily){const feedTray=part('PKMFeedTray')!;feedTray.active=true;feedTray.setPosition(0,0.16,-0.03);feedTray.setScale(spec.width*1.25,0.08,spec.receiver*0.6);feedTray.getComponent(MeshRenderer)?.setSharedMaterial(steel,0);}
