@@ -2,7 +2,7 @@ import {
   _decorator, AudioClip, AudioSource, Camera, Canvas, Color, Component, DirectionalLight,
   EventKeyboard, EventMouse, EventTouch, FogInfo, Game, game, Graphics, input, Input, KeyCode,
   Label, Layers, Material, Mesh, MeshRenderer, Node, primitives, Rect, resources,
-  Sprite, SpriteFrame, sys, UITransform, utils, Vec2, Vec3, view,
+  Sprite, SpriteFrame, SpriteRenderer, sys, Texture2D, UITransform, utils, Vec2, Vec3, view,
 } from 'cc';
 import { ActionState } from './core/ActionState';
 import {
@@ -313,6 +313,12 @@ export class GameBootstrap extends Component {
   private weaponKickVelocity = 0;
   private reloadAnimationTime = 0;
   private reloadAnimationDuration = 0;
+  private zhongzheng25D:Node|null=null;
+  private zhongzheng25DLayers:Record<'stock'|'receiver'|'barrel',Node>|null=null;
+  private zhongzheng25DReady=false;
+  private zhongzheng25DLoadFailed=false;
+  private zhongzheng25DLoadCount=0;
+  private zhongzheng25DFlash:Node|null=null;
   private audio!: AudioBus;
   private hudLabels = new Map<string, Label>();
   private hudActionLabels = new Map<'grenade' | 'medkit', Label>();
@@ -1276,6 +1282,7 @@ export class GameBootstrap extends Component {
   private createWeaponView(): void {
     this.weaponView = new Node('WeaponView'); this.cameraNode.addChild(this.weaponView);
     this.weaponView.setPosition(0.34, -0.32, -0.72);
+    this.createZhongzheng25D();
     const metal = this.material('weaponMetal', new Color(35, 39, 39), 0.94, 0.2);
     const steel = this.material('weaponSteel', new Color(74, 77, 74), 0.98, 0.14);
     const polymer = this.material('weaponPolymer', new Color(20, 23, 22), 0.16, 0.68);
@@ -1375,6 +1382,91 @@ export class GameBootstrap extends Component {
     this.box('LeftHand', new Vec3(-0.09, -0.12, -0.2), new Vec3(0.11, 0.12, 0.32), this.material('glove', new Color(31, 37, 36), 0.05, 0.9), this.weaponView);
     this.box('RightHand', new Vec3(0.11, -0.14, 0.2), new Vec3(0.12, 0.15, 0.25), this.material('glove', new Color(31, 37, 36), 0.05, 0.9), this.weaponView);
     void wood;
+  }
+
+  private createZhongzheng25D(): void {
+    const root = new Node('Zhongzheng25D');
+    root.setPosition(0.01, 0.015, -0.015);
+    root.setRotationFromEuler(0, 0, -13);
+    // SpriteFrame units are pixels / 100; this scale keeps the 21.82-unit
+    // source image close to the existing procedural rifle's screen size.
+    root.setScale(0.07, 0.07, 0.07);
+    root.active = false;
+    this.weaponView.addChild(root);
+    this.zhongzheng25D = root;
+    this.zhongzheng25DLayers = {
+      stock: this.createZhongzheng25DLayer(root, 'StockLayer', 'layer-stock', -0.012),
+      receiver: this.createZhongzheng25DLayer(root, 'ReceiverLayer', 'layer-receiver', 0),
+      barrel: this.createZhongzheng25DLayer(root, 'BarrelLayer', 'layer-barrel', 0.012),
+    };
+    const flash = new Node('MuzzleFlash25D');
+    flash.setPosition(-15.9, 0.02, 0.02); flash.setScale(0.55, 0.55, 0.55); flash.active = false;
+    root.addChild(flash); this.zhongzheng25DFlash = flash;
+    this.loadZhongzheng25DAssets();
+  }
+
+  private createZhongzheng25DLayer(root: Node, name: string, assetName: string, z: number): Node {
+    const node = new Node(name);
+    node.setPosition(0, 0, z);
+    node.active = false;
+    root.addChild(node);
+    node.addComponent(SpriteRenderer);
+    node.name = `${name}:${assetName}`;
+    return node;
+  }
+
+  private loadZhongzheng25DAssets(): void {
+    const layers = this.zhongzheng25DLayers;
+    if (!layers) return;
+    const assets: Array<[keyof typeof layers, string]> = [
+      ['stock', 'layer-stock'], ['receiver', 'layer-receiver'], ['barrel', 'layer-barrel'],
+    ];
+    for (const [key, assetName] of assets) {
+      resources.load(`ww2/weapons/zhongzheng-shi/${assetName}`, Texture2D, (error, texture) => {
+        if (error || !texture) { this.zhongzheng25DLoadFailed = true; return; }
+        const frame = new SpriteFrame();
+        frame.texture = texture;
+        const renderer = layers[key].getComponent(SpriteRenderer);
+        if (!renderer) { this.zhongzheng25DLoadFailed = true; return; }
+        renderer.spriteFrame = frame;
+        this.zhongzheng25DLoadCount += 1;
+        if (this.zhongzheng25DLoadCount === assets.length) this.zhongzheng25DReady = true;
+        this.updateWeaponAppearance();
+      });
+    }
+  }
+
+  private updateZhongzheng25D(dt = 0): void {
+    const root = this.zhongzheng25D;
+    const layers = this.zhongzheng25DLayers;
+    const player = this.player;
+    const active = Boolean(root && layers && this.zhongzheng25DReady && !this.zhongzheng25DLoadFailed && player && player.weaponId === 'zhongzheng-shi' && player.alive && !player.vehicle);
+    if (!root || !layers) return;
+    root.active = active;
+    if (!active) { for (const layer of Object.values(layers)) layer.active = false; return; }
+    const stance = player!.action.stance;
+    const moving = this.keyState.has(KeyCode.KEY_W) || this.keyState.has(KeyCode.KEY_A) || this.keyState.has(KeyCode.KEY_S) || this.keyState.has(KeyCode.KEY_D);
+    const bob = moving ? Math.sin(this.matchClock * (stance === 'stand' ? 11 : 7)) : 0;
+    const ads = this.adsTarget;
+    const reload = player!.weapon.reloading;
+    const y = ads ? 0.11 : stance === 'prone' ? -0.21 : stance === 'crouch' ? -0.09 : 0;
+    const x = ads ? -0.09 : stance === 'prone' ? -0.02 : 0;
+    const z = ads ? 0.075 : reload ? -0.12 : 0;
+    const swayX = moving && !ads ? bob * (stance === 'stand' ? 0.018 : 0.009) : 0;
+    const swayY = moving && !ads ? Math.abs(bob) * 0.012 : 0;
+    root.setPosition(0.01 + x + swayX, 0.015 + y - swayY, -0.015 + z + this.weaponKick * 0.42);
+    root.setRotationFromEuler(ads ? -7 : stance === 'prone' ? -5 : reload ? -18 : -13, 0, ads ? -2 : reload ? -16 : -13);
+    const scale = ads ? 0.073 : stance === 'prone' ? 0.064 : stance === 'crouch' ? 0.068 : 0.07;
+    root.setScale(scale, scale, scale);
+    layers.stock.setPosition(reload ? 0.018 : 0, reload ? -0.01 : 0, -0.012);
+    layers.receiver.setPosition(0, 0, 0);
+    layers.barrel.setPosition(ads ? -0.006 : 0, ads ? 0.004 : 0, 0.012);
+    if (this.zhongzheng25DFlash) {
+      this.zhongzheng25DFlash.active = false;
+      this.zhongzheng25DFlash.setPosition(-15.9, 0.02, 0.02);
+    }
+    for (const layer of Object.values(layers)) layer.active = true;
+    void dt;
   }
 
   private createUi(): void {
@@ -2294,7 +2386,7 @@ export class GameBootstrap extends Component {
     this.updatePlayer(dt); this.updateActors(dt); this.updateCharacterVisuals(dt); if(this.gameMode==='single'||this.roomClient.isHost)this.updateGrenades(dt); this.updateEffects(dt);
     if(this.gameMode==='single'||this.roomClient.isHost)this.updateCapturePoints(dt);
     if(this.gameMode==='single'||this.roomClient.isHost)this.updateMission(dt);
-    this.updateAds(dt); this.updateWeaponAnimations(dt); this.updateHud(); this.updateNetwork(dt);
+    this.updateAds(dt); this.updateWeaponAnimations(dt); this.updateZhongzheng25D(dt); this.updateHud(); this.updateNetwork(dt);
     if (this.matchTime <= 0) this.endMatch();
   }
 
@@ -2838,6 +2930,10 @@ export class GameBootstrap extends Component {
     if(!node)return null;node.getComponent(MeshRenderer)?.setSharedMaterial(material,0);node.active=true;node.setWorldPosition(position);node.setScale(scale);node.setRotationFromEuler(0,0,0);return node;
   }
   private spawnMuzzle(actor:Actor):void {
+    if (actor.player && actor.weaponId === 'zhongzheng-shi' && this.zhongzheng25DReady && !this.zhongzheng25DLoadFailed && this.zhongzheng25DFlash) {
+      this.zhongzheng25DFlash.active = true;
+      this.scheduleOnce(() => { if (this.zhongzheng25DFlash) this.zhongzheng25DFlash.active = false; }, 0.09);
+    }
     const base=actor.player?this.cameraNode.worldPosition:actor.node.worldPosition;
     const forward=this.direction(actor.yaw,actor.pitch),right=new Vec3(Math.cos(actor.yaw*Math.PI/180),0,-Math.sin(actor.yaw*Math.PI/180));
     const position=new Vec3(base.x,base.y+(actor.player?0:1.2),base.z);Vec3.scaleAndAdd(position,position,forward,actor.player?0.55:0.85);
@@ -2931,7 +3027,7 @@ export class GameBootstrap extends Component {
     const barrelTube=part('BarrelTube')!,gasTubeRound=part('GasTubeRound')!,muzzleTube=part('MuzzleTube')!;barrelTube.active=true;barrelTube.setPosition(0,0.02,barrelCenter);barrelTube.setScale(spec.heavy?0.085:0.055,spec.barrel,spec.heavy?0.085:0.055);barrelTube.getComponent(MeshRenderer)?.setSharedMaterial(gunmetal,0);gasTubeRound.active=def.category!=='pistol';gasTubeRound.setPosition(0,0.075,handguardCenter);gasTubeRound.setScale(spec.heavy?0.075:0.055,spec.handguard*0.9,spec.heavy?0.075:0.055);muzzleTube.active=true;muzzleTube.setPosition(0,0.02,barrelCenter-spec.barrel/2-0.06);muzzleTube.setScale(spec.heavy?0.12:0.075,spec.heavy?0.2:0.12,spec.heavy?0.12:0.075);
     const delta=part('DeltaRing')!;delta.active=false;delta.setPosition(0,0.01,handguardCenter+spec.handguard/2-0.035);delta.setScale(spec.width*1.02,0.075,spec.width*1.02);
     for(const name of ['Selector','MagRelease','ReceiverPinFront','ReceiverPinRear','BoltCatch','Trigger'])part(name)!.active=detailed;
-    part('ForwardAssist')!.active=detailed&&arFamily;part('ForwardAssist')!.setPosition(spec.width*0.62,0.065,spec.receiver*0.22);part('Selector')!.setPosition(spec.width*0.62,-0.01,spec.receiver*0.25);part('MagRelease')!.setPosition(spec.width*0.62,-0.04,0);part('ReceiverPinFront')!.setPosition(spec.width*0.62,-0.015,-spec.receiver*0.3);part('ReceiverPinRear')!.setPosition(spec.width*0.62,-0.015,spec.receiver*0.3);part('BoltCatch')!.setPosition(spec.width*0.58,0.015,-spec.receiver*0.16);part('Trigger')!.setPosition(0,-0.145,spec.receiver*0.18);part('Trigger')!.setRotationFromEuler(-18,0,0);
+    part('ForwardAssist')!.active=false;part('ForwardAssist')!.setPosition(spec.width*0.62,0.065,spec.receiver*0.22);part('Selector')!.setPosition(spec.width*0.62,-0.01,spec.receiver*0.25);part('MagRelease')!.setPosition(spec.width*0.62,-0.04,0);part('ReceiverPinFront')!.setPosition(spec.width*0.62,-0.015,-spec.receiver*0.3);part('ReceiverPinRear')!.setPosition(spec.width*0.62,-0.015,spec.receiver*0.3);part('BoltCatch')!.setPosition(spec.width*0.58,0.015,-spec.receiver*0.16);part('Trigger')!.setPosition(0,-0.145,spec.receiver*0.18);part('Trigger')!.setRotationFromEuler(-18,0,0);
     const heat=part('HeatShieldTop')!;heat.active=detailed&&(beltFed||hmg);heat.setPosition(0,spec.heavy?0.16:0.115,handguardCenter);heat.setScale(spec.width*0.9,0.028,spec.handguard*0.88);
     const railStart=spec.receiver*0.34;for(let i=0;i<12;i+=1){const tooth=part(`RailTooth${i}`)!;tooth.active=detailed&&def.category!=='pistol'&&!spec.wood;tooth.setPosition(0,spec.heavy?0.175:0.125,railStart-i*(spec.receiver*0.72/11));tooth.setScale(spec.width*0.82,0.024,0.018);}
     for(let i=0;i<8;i+=1)for(const side of [-1,1]){const vent=part(`Vent${side<0?'L':'R'}${i}`)!;vent.active=detailed&&def.category!=='pistol';vent.setPosition(side*spec.width*0.48,-0.005,handguardCenter+spec.handguard*0.36-i*(spec.handguard*0.72/7));vent.setScale(0.014,spec.heavy?0.065:0.046,Math.max(0.018,spec.handguard*0.055));}
@@ -2968,6 +3064,9 @@ export class GameBootstrap extends Component {
     this.opticView.active=false;for(const name of ['ScopeTube','ScopeBell','ScopeEyepiece'])part(name)!.active=false;lens.active=false;
     const opticBodyRound=part('OpticBodyRound')!,scopeTubeRound=part('ScopeTubeRound')!,scopeBellRound=part('ScopeBellRound')!,scopeEyeRound=part('ScopeEyepieceRound')!,scopeTop=part('ScopeTurretTop')!,scopeSide=part('ScopeTurretSide')!,opticLensRound=part('OpticLensRound')!;
     opticBodyRound.active=hasOptic&&!longScope&&detailed;opticBodyRound.setPosition(0,0.15,-0.03);opticBodyRound.setScale(optic==='2x'?0.13:0.105,optic==='2x'?0.3:0.2,optic==='2x'?0.13:0.105);scopeTubeRound.active=hasOptic&&longScope&&detailed;scopeTubeRound.setScale(optic==='6x'?0.14:0.12,optic==='6x'?0.54:0.43,optic==='6x'?0.14:0.12);scopeBellRound.active=scopeTubeRound.active;scopeBellRound.setPosition(0,0.17,optic==='6x'?-0.31:-0.26);scopeBellRound.setScale(optic==='6x'?0.2:0.17,0.16,optic==='6x'?0.2:0.17);scopeEyeRound.active=scopeTubeRound.active;scopeEyeRound.setPosition(0,0.17,optic==='6x'?0.29:0.23);scopeEyeRound.setScale(optic==='6x'?0.16:0.145,0.14,optic==='6x'?0.16:0.145);scopeTop.active=scopeTubeRound.active;scopeSide.active=scopeTubeRound.active;opticLensRound.active=hasOptic&&detailed;opticLensRound.setPosition(0,longScope?0.17:0.15,longScope?(optic==='6x'?-0.395:-0.345):-0.145);opticLensRound.setScale(longScope?(optic==='6x'?0.17:0.145):0.085,0.018,longScope?(optic==='6x'?0.17:0.145):0.085);
+    const useZhongzheng25D=this.zhongzheng25DReady&&!this.zhongzheng25DLoadFailed&&id==='zhongzheng-shi'&&this.player.alive&&!this.player.vehicle;
+    for(const child of this.weaponView.children)if(child!==this.zhongzheng25D)child.active=!useZhongzheng25D;
+    this.updateZhongzheng25D();
     this.resetReloadVisuals();this.updateScopeOverlay();
   }
   private resetReloadVisuals():void{
