@@ -1485,7 +1485,9 @@ export class GameBootstrap extends Component {
     const bolt = part('BoltHandle');
     if (bolt) bolt.setPosition(reload ? new Vec3(0.205, 0.075, 0.34 + 0.11 * reloadEase) : new Vec3(0.16, 0.075, 0.3));
     this.zhongzheng3DMuzzleFlashTime = Math.max(0, this.zhongzheng3DMuzzleFlashTime - dt);
-    if (this.zhongzheng3DMuzzleFlash) this.zhongzheng3DMuzzleFlash.active = this.zhongzheng3DMuzzleFlashTime > 0 && !ads;
+    // The flash is attached to the local muzzle, so it remains visible during
+    // ADS without adding another world-space flash or gameplay event.
+    if (this.zhongzheng3DMuzzleFlash) this.zhongzheng3DMuzzleFlash.active = this.zhongzheng3DMuzzleFlashTime > 0;
     void dt;
   }
 
@@ -2984,8 +2986,11 @@ export class GameBootstrap extends Component {
   private updateAds(dt:number):void{
     const p=this.player;if(!p)return;
     const optic=opticForWeapon(p.weaponId,this.profileLoadout(p.weaponId).optic);
-    const magnification=!this.adsTarget?1:optic==='6x'?6:optic==='4x'?4:optic==='2x'?2:optic==='red-dot'?1.2:1;
-    const target=2*Math.atan(Math.tan(70*Math.PI/360)/magnification)*180/Math.PI;
+    const magnification=optic==='6x'?6:optic==='4x'?4:optic==='2x'?2:optic==='red-dot'?1.2:1;
+    // Iron-sight ADS gets the requested natural zoom. Optical attachments may
+    // continue to narrow the FOV, while the transition itself stays smooth.
+    const adsFov=optic==='none'?50:Math.max(24,2*Math.atan(Math.tan(70*Math.PI/360)/magnification)*180/Math.PI);
+    const target=this.adsTarget?adsFov:70;
     this.currentFov+=(target-this.currentFov)*Math.min(1,dt*12);this.camera.fov=this.currentFov;
     const crawling=p.action.stance==='prone'&&(this.keyState.has(KeyCode.KEY_W)||this.keyState.has(KeyCode.KEY_A)||this.keyState.has(KeyCode.KEY_S)||this.keyState.has(KeyCode.KEY_D));
     const crawlX=crawling?Math.sin(this.matchClock*7)*0.025:0,crawlY=crawling?Math.abs(Math.cos(this.matchClock*7))*0.014:0;

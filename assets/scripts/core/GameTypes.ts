@@ -104,7 +104,9 @@ export const WEAPON_VIEWMODEL_PROFILES: Partial<Record<WeaponId, WeaponViewModel
     // Keep the rifle in the lower-right at hip fire; ADS is a separate,
     // sight-only composition and does not move a full rifle over the reticle.
     hipPosition: [0.08, -0.03, 0],
-    adsPosition: [-0.035, 0.18, 0.015],
+    // Parent camera offset places the sight line just below screen centre;
+    // the receiver stays beneath it while the stock remains hidden.
+    adsPosition: [-0.035, 0, 0.015],
     hipRotation: [-8, 0, -9],
     adsRotation: [-2, 0, -1],
     hipScale: 0.96,
